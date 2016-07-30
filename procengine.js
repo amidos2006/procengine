@@ -311,13 +311,13 @@ var procengine = {
   * @param mapStart (Number) the inpassable tile
   * @return {Point[][]} a 2D array contains all the points with labels
   */
-  labelMap: function(map, connection, mapStart){
+  labelMap: function(map, rect, connection, mapStart){
     var tempMap = [];
-    for (var y = 0; y < map.length; y++) {
+    for (var y = 0; y < rect.height; y++) {
       tempMap.push([]);
-      for (var x = 0; x < map[y].length; x++) {
+      for (var x = 0; x < rect.width; x++) {
         tempMap[y].push(0);
-        if(map[y][x] == mapStart){
+        if(map[y + rect.y][x + rect.x] == mapStart){
           tempMap[y][x] = -1;
         }
       }
@@ -396,8 +396,8 @@ var procengine = {
   /**
   *
   */
-  fixUnconnected: function(map){
-    var labeledData = procengine.labelMap(map, procengine.connectionType,
+  fixUnconnected: function(map, rect){
+    var labeledData = procengine.labelMap(map, rect, procengine.connectionType,
       procengine.mapStart);
     if(procengine.unconnected == procengine.Unconnected["delete"]){
       var largestLabel = procengine.getBiggestLabel(labeledData);
@@ -739,13 +739,15 @@ var procengine = {
     procengine.applyCellularAutomata(map,
       procengine.roomAutomata.simulationNumber, rooms,
       procengine.roomAutomata.startingRules, procengine.roomAutomata.rules);
-    procengine.fixUnconnected(map);
-    if(procengine.isDebug){
-      console.log("After using connection Method:\n");
-      procengine.printDebugMap(map);
-      if(procengine.smoothAutomata.simulationNumber > 0){
-        console.log("Smooth Automata:\n");
+    for(var i=0; i<rooms.length; i++){
+      procengine.fixUnconnected(map, rooms[i]);
+      if(procengine.isDebug){
+        console.log("After using connection Method on Room " + i.toString() + ":\n");
+        procengine.printDebugMap(map);
       }
+    }
+    if(procengine.isDebug && procengine.smoothAutomata.simulationNumber > 0){
+        console.log("Smooth Automata:\n");
     }
     procengine.applyCellularAutomata(map,
       procengine.smoothAutomata.simulationNumber,
