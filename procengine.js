@@ -656,7 +656,7 @@ var procengine = {
     };
 
     if(data.hasOwnProperty("mapData")){
-      var sizePieces = data["mapData"][0].split("x");
+      var sizePieces = data["mapData"][0].toLowerCase().split("x");
       procengine.mapData.mapSize.push(parseInt(sizePieces[0]));
       procengine.mapData.mapSize.push(parseInt(sizePieces[1]));
       var roomPieces = data["mapData"][1].split(":");
@@ -695,10 +695,10 @@ var procengine = {
       procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"];
     }
 
-    if(data.hasOwnProperty("neighbourhood")){
-      for(var key in data["neighbourhood"]){
+    if(data.hasOwnProperty("neighbourhoods")){
+      for(var key in data["neighbourhoods"]){
         procengine.identifiedNames.neigbourhoods[key.trim().toLowerCase()] =
-          procengine.parseNeighbourhood(data["neighbourhood"][key]);
+          procengine.parseNeighbourhood(data["neighbourhoods"][key]);
       }
     }
     else{
@@ -809,7 +809,7 @@ var procengine = {
 var data = {
   "mapData": ["15x7", "equal:1x1:1", "solid:empty", "connect:plus"],
   "names": ["empty", "solid"],
-  "neighbourhood": {"plus":"010,101,010", "all":"111,101,111"},
+  "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
   "startingRules": ["solid:1","empty:2"],
   "roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]
 };
