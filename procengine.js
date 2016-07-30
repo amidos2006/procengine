@@ -1,3 +1,6 @@
+/**
+ * @author Ahmed Khalifa (Amidos)
+ */
 var procengine = {
   ////////////////////////////Data Members//////////////////////////////////////
   /**
@@ -738,6 +741,7 @@ var procengine = {
   },
   /**
   * generate a level based on the intialized data
+  * @return {String[][]} a 2d matrix of the defined names
   */
   generateLevel: function(){
     if(!procengine.testing.isInitialized){
@@ -778,6 +782,7 @@ var procengine = {
   },
   /**
   * get string contains all the data about the generator
+  * @return {String} display all the information stored in the engine
   */
   toString: function(){
     return "mapSize: " + procengine.mapData.mapSize[0].toString() + "x" +
