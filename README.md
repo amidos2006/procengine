@@ -2,10 +2,10 @@
 ## What is ProcEngine?
 ProcEngine is a step toward having a unified opensource library for different map generation techniques. The library is simple and easy to use. You only have 3 functions to use and 1 attribute:
 
-`procengine.initialize(data)`: to initialize the system with your rules.
-`procengine.generateLevel()`: to generate a level (you have to call initialize beforehand).
-`procengine.toString()`: to get a string that shows the current data saved in the system.
-`procengine.testing.isDebug` : set to `true` to allow console printing after each step in the system.
+- `procengine.initialize(data)`: to initialize the system with your rules.
+- `procengine.generateLevel()`: to generate a level (you have to call initialize beforehand).
+- `procengine.toString()`: to get a string that shows the current data saved in the system.
+- `procengine.testing.isDebug` : set to `true` to allow console printing after each step in the system.
 
 This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating the world (in Emoji)`.
 
@@ -21,6 +21,7 @@ This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating
 
 ## How to use ProcEngine as a browser library?
 Copy `procengine.js` to your `js` folder then import it as a javascript file in your html before using it.
+
 `<script src="js/procengine.js"></script>`
 
 ## How to use ProcEngine as TypeScript library?
