@@ -47,6 +47,8 @@ These are some examples of the results:
 111111111111111
 ```
 
+For a simple way to construct the initialization object try using this tool (link). For more interactive examples see this website (link).
+
 This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating the world (in Emoji)`.
 
 ## What is the main features?
@@ -88,3 +90,5 @@ In this example you are generating a level of size `15x7` with only 1 room (whic
 if (this tile is "empty" and have more than "5" neighbours based on the "all" neighbourhood) then
   change this tile to "solid"
 ```
+
+For a simple way to construct the initialization object try using this tool (link). For more interactive examples see this website (link).
