@@ -1,49 +1,70 @@
 var procengine = {
   ////////////////////////////Data Members//////////////////////////////////////
   /**
-  * to make sure people call Initialize function before generate
-  */
-  isInitialized: false,
+   * testing information for the system
+   */
+  testing:{
+    /**
+    * to make sure people call Initialize function before generate
+    */
+    isInitialized: false,
+    /**
+    * for debugging the engine
+    */
+    isDebug: true,
+  },
   /**
-  * for debugging the engine
-  */
-  isDebug: true,
+   * contains the initial information about the generated map
+   */
+  mapData: {
+    /**
+    * the size of the map [width x height]
+    */
+    mapSize: [],
+    /**
+    * number of rooms to be generated in the level
+    */
+    roomNumber: 1,
+    /**
+    * the tile used to fill the map
+    */
+    mapStart: -1,
+    /**
+    * the tile used to dig through the map
+    */
+    mapDig: -1,
+    
+  },
   /**
-  * the size of the map [width x height]
-  */
-  mapSize: [],
+   * how to handle unconnected parts
+   */
+  handlingUnconnected: {
+    /**
+    * handling the unconnected areas
+    */
+    unconnected: -1,
+    /**
+    * checking unconnected areas
+    */
+    connectionType: [[]],
+  },
   /**
-  * number of rooms to be generated in the level
-  */
-  roomNumber: 1,
-  /**
-  * the tile used to fill the map
-  */
-  mapStart: -1,
-  /**
-  * the tile used to dig through the map
-  */
-  mapDig: -1,
-  /**
-  * handling the unconnected areas
-  */
-  unconnected: -1,
-  /**
-  * checking unconnected areas
-  */
-  connectionType: [[]],
-  /**
-  * dictionary contains all defined names and coressponding ids
-  */
-  namesIndex: {},
-  /**
-  * dictionary contains all defined ids and coressponding names
-  */
-  indexNames: {},
-  /**
-  * dictionary for all the defined neigbourhoods
-  */
-  neigbourhoods: {},
+   * the names and neighbourhoods idendified by the user
+   */
+  identifiedNames:{
+    /**
+    * dictionary contains all defined names and coressponding ids
+    */
+    namesIndex: {},
+    /**
+    * dictionary contains all defined ids and coressponding names
+    */
+    indexNames: {},
+    /**
+    * dictionary for all the defined neigbourhoods
+    */
+    neigbourhoods: {},
+  },
   /**
   * contains all the information about the cellular automata
   */
@@ -105,10 +126,10 @@ var procengine = {
   */
   ReplacingRule: function(dataLine){
     var pieces = dataLine.split(":");
-    this.tile = procengine.namesIndex[pieces[0].trim().toLowerCase()];
+    this.tile = procengine.identifiedNames.namesIndex[pieces[0].trim().toLowerCase()];
     this.probability = parseFloat(pieces[1].trim());
     this.toString = function(){
-      return procengine.indexNames[this.tile] + " " + this.probability.toString();
+      return procengine.identifiedNames.indexNames[this.tile] + " " + this.probability.toString();
     };
   },
   /**
@@ -128,9 +149,9 @@ var procengine = {
   */
   Rule: function(dataLine){
     var pieces = dataLine.split(",");
-    this.tile = procengine.namesIndex[pieces[0].trim().toLowerCase()];
-    this.neighbourhood = procengine.neigbourhoods[pieces[1].trim().toLowerCase()];
-    this.checkTile = procengine.namesIndex[pieces[2].trim().toLowerCase()];
+    this.tile = procengine.identifiedNames.namesIndex[pieces[0].trim().toLowerCase()];
+    this.neighbourhood = procengine.identifiedNames.neigbourhoods[pieces[1].trim().toLowerCase()];
+    this.checkTile = procengine.identifiedNames.namesIndex[pieces[2].trim().toLowerCase()];
     this.conditionType = procengine.ConditionType[pieces[3].trim().toLowerCase()];
     this.lowBoundary = parseInt(pieces[4].trim().toLowerCase());
     this.highBoundary = parseInt(pieces[5].trim().toLowerCase());
@@ -142,8 +163,8 @@ var procengine = {
     procengine.fixRulesProbability(this.replacingRules,
       procengine.getTotalProbability(this.replacingRules));
     this.toString = function(){
-      return procengine.indexNames[this.tile] + " " +
-        procengine.indexNames[this.checkTile] + " " + this.conditionType + " " +
+      return procengine.identifiedNames.indexNames[this.tile] + " " +
+        procengine.identifiedNames.indexNames[this.checkTile] + " " + this.conditionType + " " +
         this.lowBoundary.toString() + " " + this.highBoundary.toString() + " [" +
         this.replacingRules.toString() + "]";
     };
@@ -341,7 +362,7 @@ var procengine = {
     for (var y = 0; y < tempMap.length; y++) {
       for (var x = 0; x < tempMap[y].length; x++) {
         if(tempMap[y][x] != -1){
-          result[tempMap[y][x] - 1].push(new procengine.Point(x, y));
+          result[tempMap[y][x] - 1].push(new procengine.Point(x + rect.x, y + rect.y));
         }
       }
     }
@@ -353,7 +374,7 @@ var procengine = {
   * @param map {Number[][]} the current map
   */
   printDebugMap: function(map){
-    if(!procengine.isDebug){
+    if(!procengine.testing.isDebug){
       return;
     }
 
@@ -377,10 +398,10 @@ var procengine = {
   */
   getStartingMap: function(){
     var map = [];
-    for (var y = 0; y < procengine.mapSize[1]; y++) {
+    for (var y = 0; y < procengine.mapData.mapSize[1]; y++) {
       map.push([]);
-      for (var x = 0; x < procengine.mapSize[0]; x++) {
-        map[y].push(procengine.mapStart);
+      for (var x = 0; x < procengine.mapData.mapSize[0]; x++) {
+        map[y].push(procengine.mapData.mapStart);
       }
     }
     return map;
@@ -391,15 +412,15 @@ var procengine = {
   * @return {Rectangle[]} array of all the rooms to be adjusted
   */
   getRooms: function(map){
-    return [new procengine.Rectangle(1, 1, procengine.mapSize[0] - 2, procengine.mapSize[1] - 2)];
+    return [new procengine.Rectangle(1, 1, procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2)];
   },
   /**
   *
   */
   fixUnconnected: function(map, rect){
-    var labeledData = procengine.labelMap(map, rect, procengine.connectionType,
-      procengine.mapStart);
-    if(procengine.unconnected == procengine.Unconnected["delete"]){
+    var labeledData = procengine.labelMap(map, rect, procengine.handlingUnconnected.connectionType,
+      procengine.mapData.mapStart);
+    if(procengine.handlingUnconnected.unconnected == procengine.Unconnected["delete"]){
       var largestLabel = procengine.getBiggestLabel(labeledData);
       for (var i = 0; i < labeledData.length; i++) {
         if(i == largestLabel){
@@ -407,11 +428,11 @@ var procengine = {
         }
         for (var j = 0; j < labeledData[i].length; j++) {
           var point = labeledData[i][j];
-          map[point.y][point.x] = procengine.mapStart;
+          map[point.y][point.x] = procengine.mapData.mapStart;
         }
       }
     }
-    if(procengine.unconnected == procengine.Unconnected["connect"]){
+    if(procengine.handlingUnconnected.unconnected == procengine.Unconnected["connect"]){
       while(labeledData.length > 1){
         var randomLabel = procengine.randomInt(labeledData.length - 1) + 1;
         var p1 = labeledData[0][procengine.randomInt(labeledData[0].length)].
@@ -427,19 +448,19 @@ var procengine = {
         }
         if(Math.random() < 0.5){
           procengine.connectPoints(map, p1, p2, new procengine.Point(
-            procengine.sign(p2.x - p1.x), 0), procengine.mapStart,
-            procengine.mapDig);
+            procengine.sign(p2.x - p1.x), 0), procengine.mapData.mapStart,
+            procengine.mapData.mapDig);
           procengine.connectPoints(map, p1, p2, new procengine.Point(
-            0, procengine.sign(p2.y - p1.y)), procengine.mapStart,
-            procengine.mapDig);
+            0, procengine.sign(p2.y - p1.y)), procengine.mapData.mapStart,
+            procengine.mapData.mapDig);
         }
         else{
           procengine.connectPoints(map, p1, p2, new procengine.Point(
-            0, procengine.sign(p2.y - p1.y)), procengine.mapStart,
-            procengine.mapDig);
+            0, procengine.sign(p2.y - p1.y)), procengine.mapData.mapStart,
+            procengine.mapData.mapDig);
           procengine.connectPoints(map, p1, p2, new procengine.Point(
-            procengine.sign(p2.x - p1.x), 0), procengine.mapStart,
-            procengine.mapDig);
+            procengine.sign(p2.x - p1.x), 0), procengine.mapData.mapStart,
+            procengine.mapData.mapDig);
         }
       }
     }
@@ -598,7 +619,7 @@ var procengine = {
     for (var i = 0; i < map.length; i++) {
       tempMap.push([]);
       for (var j = 0; j < map[i].length; j++) {
-        tempMap[i].push(procengine.indexNames[map[i][j]]);
+        tempMap[i].push(procengine.identifiedNames.indexNames[map[i][j]]);
       }
     }
     return tempMap;
@@ -611,15 +632,15 @@ var procengine = {
   *                      "smoothRules"
   */
   initialize: function(data){
-    procengine.mapSize = [];
-    procengine.roomNumber = 1;
-    procengine.mapStart = "";
-    procengine.mapDig = "";
-    procengine.unconnected = procengine.Unconnected["connect"];
-    procengine.connectionType = procengine.ConnectionType["plus"];
-    procengine.namesIndex = {};
-    procengine.indexNames = {};
-    procengine.neigbourhoods = {};
+    procengine.mapData.mapSize = [];
+    procengine.mapData.roomNumber = 1;
+    procengine.mapData.mapStart = "";
+    procengine.mapData.mapDig = "";
+    procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
+    procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"];
+    procengine.identifiedNames.namesIndex = {};
+    procengine.identifiedNames.indexNames = {};
+    procengine.identifiedNames.neigbourhoods = {};
     procengine.roomAutomata = {
       simulationNumber: 2,
       startingRules: [],
@@ -631,50 +652,50 @@ var procengine = {
     };
 
     if(data.hasOwnProperty("mapData")){
-      procengine.mapSize.push(parseInt(data["mapData"][0]));
-      procengine.mapSize.push(parseInt(data["mapData"][1]));
-      procengine.roomNumber = parseInt(data["mapData"][2]);
+      procengine.mapData.mapSize.push(parseInt(data["mapData"][0]));
+      procengine.mapData.mapSize.push(parseInt(data["mapData"][1]));
+      procengine.mapData.roomNumber = parseInt(data["mapData"][2]);
     }
     else{
-      procengine.mapSize.push(24);
-      procengine.mapSize.push(24);
-      procengine.roomNumber = 1;
+      procengine.mapData.mapSize.push(24);
+      procengine.mapData.mapSize.push(24);
+      procengine.mapData.roomNumber = 1;
     }
 
     if(data.hasOwnProperty("names")){
       var index = 0;
       for(var i = 0; i < data["names"].length; i++) {
-        procengine.namesIndex[data["names"][i].trim().toLowerCase()] = index;
-        procengine.indexNames[index] = data["names"][i].trim().toLowerCase();
+        procengine.identifiedNames.namesIndex[data["names"][i].trim().toLowerCase()] = index;
+        procengine.identifiedNames.indexNames[index] = data["names"][i].trim().toLowerCase();
         index+=1;
       }
     }
     else{
-      procengine.namesIndex = {"solid":0, "empty":1};
+      procengine.identifiedNames.namesIndex = {"solid":0, "empty":1};
     }
 
     if(data.hasOwnProperty("mapData")){
-      procengine.mapStart = procengine.namesIndex[data["mapData"][3].trim().toLowerCase()];
-      procengine.mapDig = procengine.namesIndex[data["mapData"][4].trim().toLowerCase()];
+      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[data["mapData"][3].trim().toLowerCase()];
+      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[data["mapData"][4].trim().toLowerCase()];
       var dataPieces = data["mapData"][5].split(":");
-      procengine.unconnected = procengine.Unconnected[dataPieces[0].trim().toLowerCase()];
-      procengine.connectionType = procengine.ConnectionType[dataPieces[1].trim().toLowerCase()];
+      procengine.handlingUnconnected.unconnected = procengine.Unconnected[dataPieces[0].trim().toLowerCase()];
+      procengine.handlingUnconnected.connectionType = procengine.ConnectionType[dataPieces[1].trim().toLowerCase()];
     }
     else{
-      procengine.mapStart = procengine.namesIndex["solid"];
-      procengine.mapDig = procengine.namesIndex["empty"];
-      procengine.unconnected = procengine.Unconnected["connect"];
-      procengine.connectionType = procengine.ConnectionType["plus"]
+      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex["solid"];
+      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex["empty"];
+      procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
+      procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"]
     }
 
     if(data.hasOwnProperty("neighbourhood")){
       for(var key in data["neighbourhood"]){
-        procengine.neigbourhoods[key.trim().toLowerCase()] =
+        procengine.identifiedNames.neigbourhoods[key.trim().toLowerCase()] =
           procengine.parseNeighbourhood(data["neighbourhood"][key]);
       }
     }
     else{
-      procengine.neigbourhoods = {
+      procengine.identifiedNames.neigbourhoods = {
         "plus": procengine.parseNeighbourhood("010,101,010"),
         "all": procengine.parseNeighbourhood("111","101","111")
       };
@@ -713,23 +734,23 @@ var procengine = {
       procengine.smoothAutomata.simulationNumber = 0;
     }
 
-    isInitialized = true;
+    procengine.testing.isInitialized = true;
   },
   /**
   * generate a level based on the intialized data
   */
   generateLevel: function(){
-    if(!isInitialized){
+    if(!procengine.testing.isInitialized){
       console.log("you must call initialize first");
     }
 
     var map = procengine.getStartingMap();
-    if(procengine.isDebug){
+    if(procengine.testing.isDebug){
       console.log("After constructing the matrix:\n");
       procengine.printDebugMap(map);
     }
     var rooms = procengine.getRooms(map);
-    if(procengine.isDebug){
+    if(procengine.testing.isDebug){
       console.log("After digging the rooms:\n");
       procengine.printDebugMap(map);
       if(procengine.roomAutomata.simulationNumber > 0){
@@ -741,31 +762,31 @@ var procengine = {
       procengine.roomAutomata.startingRules, procengine.roomAutomata.rules);
     for(var i=0; i<rooms.length; i++){
       procengine.fixUnconnected(map, rooms[i]);
-      if(procengine.isDebug){
+      if(procengine.testing.isDebug){
         console.log("After using connection Method on Room " + i.toString() + ":\n");
         procengine.printDebugMap(map);
       }
     }
-    if(procengine.isDebug && procengine.smoothAutomata.simulationNumber > 0){
+    if(procengine.testing.isDebug && procengine.smoothAutomata.simulationNumber > 0){
         console.log("Smooth Automata:\n");
     }
     procengine.applyCellularAutomata(map,
       procengine.smoothAutomata.simulationNumber,
-      [new procengine.Rectangle(0, 0, procengine.mapSize[0],
-        procengine.mapSize[1])], [], procengine.smoothAutomata.rules);
+      [new procengine.Rectangle(0, 0, procengine.mapData.mapSize[0],
+        procengine.mapData.mapSize[1])], [], procengine.smoothAutomata.rules);
     return procengine.getNamesMap(map);
   },
   /**
   * get string contains all the data about the generator
   */
   toString: function(){
-    return "mapSize: " + procengine.mapSize[0].toString() + "x" +
-                         procengine.mapSize[1].toString() + "\n" +
-      "roomNumber: " + procengine.roomNumber.toString() + "\n" +
-      "Unconnected: " + procengine.unconnected + "\n" +
-      "mapStart: " + procengine.indexNames[procengine.mapStart] + " mapDig: " +
-                     procengine.indexNames[procengine.mapDig] + "\n" +
-      "names: " + procengine.indexNames.toString() + "\n" +
+    return "mapSize: " + procengine.mapData.mapSize[0].toString() + "x" +
+                         procengine.mapData.mapSize[1].toString() + "\n" +
+      "roomNumber: " + procengine.mapData.roomNumber.toString() + "\n" +
+      "Unconnected: " + procengine.handlingUnconnected.unconnected + "\n" +
+      "mapStart: " + procengine.identifiedNames.indexNames[procengine.mapData.mapStart] + " mapDig: " +
+                     procengine.identifiedNames.indexNames[procengine.mapData.mapDig] + "\n" +
+      "names: " + procengine.identifiedNames.indexNames.toString() + "\n" +
       "roomAutomata:\n" +
       "\tsimulationNumber: " + procengine.roomAutomata.simulationNumber.toString() + "\n" +
       "\tstartingRules: [" + procengine.roomAutomata.startingRules.toString() + "]\n" +
