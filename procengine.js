@@ -656,9 +656,11 @@ var procengine = {
     };
 
     if(data.hasOwnProperty("mapData")){
-      procengine.mapData.mapSize.push(parseInt(data["mapData"][0]));
-      procengine.mapData.mapSize.push(parseInt(data["mapData"][1]));
-      procengine.mapData.roomNumber = parseInt(data["mapData"][2]);
+      var sizePieces = data["mapData"][0].split("x");
+      procengine.mapData.mapSize.push(parseInt(sizePieces[0]));
+      procengine.mapData.mapSize.push(parseInt(sizePieces[1]));
+      var roomPieces = data["mapData"][1].split(":");
+      procengine.mapData.roomNumber = parseInt(roomPieces[2]);
     }
     else{
       procengine.mapData.mapSize.push(24);
@@ -679,9 +681,10 @@ var procengine = {
     }
 
     if(data.hasOwnProperty("mapData")){
-      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[data["mapData"][3].trim().toLowerCase()];
-      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[data["mapData"][4].trim().toLowerCase()];
-      var dataPieces = data["mapData"][5].split(":");
+      var intializePieces = data["mapData"][2].split(":");
+      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[intializePieces[0].toLowerCase()];
+      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[intializePieces[1].toLowerCase()];
+      var dataPieces = data["mapData"][3].split(":");
       procengine.handlingUnconnected.unconnected = procengine.Unconnected[dataPieces[0].trim().toLowerCase()];
       procengine.handlingUnconnected.connectionType = procengine.ConnectionType[dataPieces[1].trim().toLowerCase()];
     }
@@ -689,7 +692,7 @@ var procengine = {
       procengine.mapData.mapStart = procengine.identifiedNames.namesIndex["solid"];
       procengine.mapData.mapDig = procengine.identifiedNames.namesIndex["empty"];
       procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
-      procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"]
+      procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"];
     }
 
     if(data.hasOwnProperty("neighbourhood")){
@@ -706,13 +709,11 @@ var procengine = {
     }
 
     if(data.hasOwnProperty("startingRules")){
-      procengine.roomAutomata.simulationNumber = parseInt(data["startingRules"][0]);
-      for(var i = 1; i < data["startingRules"].length; i++) {
+      for(var i = 0; i < data["startingRules"].length; i++) {
         procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule(data["startingRules"][i]));
       }
     }
     else{
-      procengine.roomAutomata.simulationNumber = 2;
       procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule("solid,2"));
       procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule("empty,1"));
     }
@@ -720,11 +721,13 @@ var procengine = {
       procengine.getTotalProbability(procengine.roomAutomata.startingRules));
 
     if(data.hasOwnProperty("roomRules")){
-      for(var i = 0; i < data["roomRules"].length; i++) {
+      procengine.roomAutomata.simulationNumber = parseInt(data["roomRules"][0]);
+      for(var i = 1; i < data["roomRules"].length; i++) {
         procengine.roomAutomata.rules.push(new procengine.Rule(data["roomRules"][i]));
       }
     }
     else{
+      procengine.roomAutomata.simulationNumber = 2;
       procengine.roomAutomata.rules.push(new procengine.Rule("empty,1,all,solid,out,0,5,solid"));
     }
 
@@ -804,11 +807,11 @@ var procengine = {
 };
 ///////////////////////////////Testing Code/////////////////////////////////////
 var data = {
-  "mapData": ["15", "7", "1", "solid", "empty", "connect:plus"],
-  "names": ["solid", "empty"],
+  "mapData": ["15x7", "equal:1x1:1", "solid:empty", "connect:plus"],
+  "names": ["empty", "solid"],
   "neighbourhood": {"plus":"010,101,010", "all":"111,101,111"},
-  "startingRules": ["2","solid:1","empty:2"],
-  "roomRules": ["empty,all,solid,out,0,5,solid:1"]
+  "startingRules": ["solid:1","empty:2"],
+  "roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]
 };
 procengine.initialize(data);
 procengine.generateLevel();

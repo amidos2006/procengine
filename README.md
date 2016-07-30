@@ -7,6 +7,46 @@ ProcEngine is a step toward having a unified opensource library for different ma
 - `procengine.toString()`: to get a string that shows the current data saved in the system.
 - `procengine.testing.isDebug` : set to `true` to allow console printing after each step in the system.
 
+A simple example:
+```
+var data = {
+  "mapData": ["15x7", "equal:1x1:1", "solid:empty", "connect:plus"],
+  "names": ["empty", "solid"],
+  "neighbourhood": {"plus":"010,101,010", "all":"111,101,111"},
+  "startingRules": ["solid:1","empty:2"],
+  "roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]
+};
+procengine.initialize(data);
+procengine.generateLevel();
+```
+
+These are some examples of the results:
+```
+111111111111111
+110000000000111
+100011110001011
+101011101000011
+100000000011011
+110000011011111
+111111111111111
+
+111111111111111
+111000111100111
+100100110001011
+100000000000011
+110100000000011
+111001000001111
+111111111111111
+
+111111111111111
+111101111001111
+110000000000111
+100001000100111
+100111100001111
+111111100001111
+111111111111111
+```
+
 This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating the world (in Emoji)`.
 
 ## What is the main features?
