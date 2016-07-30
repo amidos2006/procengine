@@ -26,10 +26,6 @@ var procengine = {
     */
     mapSize: [],
     /**
-    * number of rooms to be generated in the level
-    */
-    roomNumber: 1,
-    /**
     * the tile used to fill the map
     */
     mapStart: -1,
@@ -38,6 +34,23 @@ var procengine = {
     */
     mapDig: -1,
     
+  },
+  /**
+   * 
+   */
+  diggerInfo: {
+    /**
+     * 
+     */
+    diggingType: -1,
+    /**
+     * 
+     */
+    diggingData: [],
+    /**
+    * number of rooms to be generated in the level
+    */
+    roomNumber: -1,
   },
   /**
    * how to handle unconnected parts
@@ -76,7 +89,7 @@ var procengine = {
     /**
     * number of simulations for the cellular automata
     */
-    simulationNumber: 2,
+    simulationNumber: -1,
     /**
     * starting rules that is used to starting distribution
     */
@@ -93,7 +106,7 @@ var procengine = {
     /**
     * number of smooth simulations
     */
-    simulationNumber: 0,
+    simulationNumber: -1,
     /**
     * rules for the smoothing cellular automata
     */
@@ -120,6 +133,13 @@ var procengine = {
   ConnectionType: {
     "plus":[[0,1,0], [1,0,1], [0,1,0]],
     "all":[[111], [101], [111]]
+  },
+  /**
+   * used to determine the type of map division
+   */
+  DiggingType: {
+    "equal": 0,
+    "tree": 1
   },
   /**
   * ReplacingRule class contains data about inserting a tile using probabilities
@@ -637,9 +657,11 @@ var procengine = {
   */
   initialize: function(data){
     procengine.mapData.mapSize = [];
-    procengine.mapData.roomNumber = 1;
-    procengine.mapData.mapStart = "";
-    procengine.mapData.mapDig = "";
+    procengine.mapData.mapStart = 0;
+    procengine.mapData.mapDig = 0;
+    procengine.diggerInfo.diggingType = procengine.DiggingType["equal"];
+    procengine.diggerInfo.diggingData = [];
+    procengine.diggerInfo.roomNumber = 1;
     procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
     procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"];
     procengine.identifiedNames.namesIndex = {};
@@ -660,12 +682,19 @@ var procengine = {
       procengine.mapData.mapSize.push(parseInt(sizePieces[0]));
       procengine.mapData.mapSize.push(parseInt(sizePieces[1]));
       var roomPieces = data["mapData"][1].split(":");
-      procengine.mapData.roomNumber = parseInt(roomPieces[2]);
+      procengine.diggerInfo.diggingType = procengine.DiggingType[roomPieces[0].trim().toLowerCase()];
+      sizePieces = roomPieces[1].toLowerCase().split("x");
+      procengine.diggerInfo.diggingData.push(parseInt(sizePieces[0]));
+      procengine.diggerInfo.diggingData.push(parseInt(sizePieces[1]));
+      procengine.diggerInfo.roomNumber = parseInt(roomPieces[2]);
     }
     else{
-      procengine.mapData.mapSize.push(24);
-      procengine.mapData.mapSize.push(24);
-      procengine.mapData.roomNumber = 1;
+      procengine.mapData.mapSize.push(15);
+      procengine.mapData.mapSize.push(7);
+      procengine.diggerInfo.diggingType = procengine.DiggingType["equal"];
+      procengine.diggerInfo.diggingData.push(1);
+      procengine.diggerInfo.diggingData.push(1);
+      procengine.diggerInfo.roomNumber = 1;
     }
 
     if(data.hasOwnProperty("names")){
@@ -791,7 +820,10 @@ var procengine = {
   toString: function(){
     return "mapSize: " + procengine.mapData.mapSize[0].toString() + "x" +
                          procengine.mapData.mapSize[1].toString() + "\n" +
-      "roomNumber: " + procengine.mapData.roomNumber.toString() + "\n" +
+      "roomNumber: " + procengine.diggerInfo.roomNumber.toString() + "\n" +
+      "diggingType: " + procengine.diggerInfo.diggingType.toString + "\n" +
+      "diggingData: " + procengine.diggerInfo.diggingData[0].toString() + "x" +
+                        procengine.diggerInfo.diggingData[1].toString() + "x" +
       "Unconnected: " + procengine.handlingUnconnected.unconnected + "\n" +
       "mapStart: " + procengine.identifiedNames.indexNames[procengine.mapData.mapStart] + " mapDig: " +
                      procengine.identifiedNames.indexNames[procengine.mapData.mapDig] + "\n" +
