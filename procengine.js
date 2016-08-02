@@ -15,7 +15,7 @@ var procengine = {
     /**
     * for debugging the engine
     */
-    isDebug: true,
+    isDebug: true
   },
   /**
    * contains the initial information about the generated map
@@ -32,7 +32,7 @@ var procengine = {
     /**
     * the tile used to dig through the map
     */
-    mapDig: -1,
+    mapDig: -1
     
   },
   /**
@@ -50,7 +50,7 @@ var procengine = {
     /**
     * number of rooms to be generated in the level
     */
-    roomNumber: -1,
+    roomNumber: -1
   },
   /**
    * how to handle unconnected parts
@@ -64,6 +64,10 @@ var procengine = {
     * checking unconnected areas
     */
     connectionType: [[]],
+    /**
+     * how thick is the connection between two rooms
+     */
+    connectionThickness: 1
   },
   /**
    * the names and neighbourhoods idendified by the user
@@ -80,7 +84,7 @@ var procengine = {
     /**
     * dictionary for all the defined neigbourhoods
     */
-    neigbourhoods: {},
+    neigbourhoods: {}
   },
   /**
   * contains all the information about the cellular automata
@@ -126,13 +130,6 @@ var procengine = {
   Unconnected: {
     "connect":0,
     "delete":1
-  },
-  /**
-  * used to check if unconnected
-  */
-  ConnectionType: {
-    "plus":[[0,1,0], [1,0,1], [0,1,0]],
-    "all":[[111], [101], [111]]
   },
   /**
    * used to determine the type of map division
@@ -538,76 +535,18 @@ var procengine = {
         procengine.diggerInfo.diggingData[1], procengine.diggerInfo.roomNumber);
     }
 
-    procengine.digRooms(map, rooms);
-    procengine.randomConnect(map, rooms);
-
     return rooms;
-  },
-  /**
-   * Dig the list of rooms in the current map
-   * @param map {Number[][]} the current map to be modified
-   * @param rects {Rectangle[]} the current rooms to be digged
-   */
-  digRooms: function(map, rects){
-    for(var i=0; i<rects.length; i++){
-      var r = rects[i];
-      for(var x=0; x<r.width; x++){
-        for(var y=0; y<r.height; y++){
-          map[r.y + y][r.x + x] = procengine.mapData.mapDig;
-        }
-      }
-    }
-  },
-  /**
-   * connect the rooms randomly
-   * @param map {Number[][]} the current map to be modified
-   * @param rects {Rectangle[]} the current rooms to be connected
-   */
-  randomConnect: function(map, rects){
-    var rooms = [];
-    for(var i=0; i<rects.length; i++){
-      rooms.push(rects[i]);
-    }
-
-    while(rooms.length > 1){
-      var index1 = procengine.randomInt(rooms.length);
-      var center1 = new procengine.Point(Math.floor(rooms[index1].x + rooms[index1].width / 2), 
-        Math.floor(rooms[index1].y + rooms[index1].height / 2));
-      
-      var index2 = (index1 + 1 + procengine.randomInt(rooms.length - 1)) % rooms.length;
-      var center2 = new procengine.Point(Math.floor(rooms[index2].x + rooms[index2].width / 2), 
-        Math.floor(rooms[index2].y + rooms[index2].height / 2));
-      
-      if(Math.random() < 0.5){
-        var temp = center2;
-        center2 = center1;
-        center1 = temp;
-      }
-
-      procengine.connectPoints(map, center1, center2, 
-        new procengine.Point(procengine.sign(center2.x - center1.x), 0), 
-        procengine.mapData.mapStart, procengine.mapData.mapDig);
-      procengine.connectPoints(map, center1, center2, 
-        new procengine.Point(0, procengine.sign(center2.y - center1.y)), 
-        procengine.mapData.mapStart, procengine.mapData.mapDig);
-
-      if(Math.random() < 0.5){
-        rooms.splice(index1, 1);
-      }
-      else{
-        rooms.splice(index2, 1);
-      }
-    }
   },
   /**
    * connect unconnected objects in a certain room
    * @param map {Number[][]} the current map to be modified
    * @param rect {Rectangle} the current selected room
+   * @param fixType {Unconnected} how to handle unconnected areas
    */
-  fixUnconnected: function(map, rect){
+  fixUnconnected: function(map, rect, fixType){
     var labeledData = procengine.labelMap(map, rect, procengine.handlingUnconnected.connectionType,
       procengine.mapData.mapStart);
-    if(procengine.handlingUnconnected.unconnected == procengine.Unconnected["delete"]){
+    if(fixType == procengine.Unconnected["delete"]){
       var largestLabel = procengine.getBiggestLabel(labeledData);
       for (var i = 0; i < labeledData.length; i++) {
         if(i == largestLabel){
@@ -619,15 +558,19 @@ var procengine = {
         }
       }
     }
-    if(procengine.handlingUnconnected.unconnected == procengine.Unconnected["connect"]){
+    if(fixType == procengine.Unconnected["connect"]){
       while(labeledData.length > 1){
-        var randomLabel = procengine.randomInt(labeledData.length - 1) + 1;
-        var p1 = labeledData[0][procengine.randomInt(labeledData[0].length)].
-          clone();
-        var p2 = labeledData[randomLabel][procengine.randomInt(
-          labeledData[randomLabel].length)].clone();
-        procengine.appendArray(labeledData[0], labeledData[randomLabel]);
-        labeledData.splice(randomLabel, 1);
+        var i1 = procengine.randomInt(labeledData.length);
+        var i2 = (i1 + procengine.randomInt(labeledData.length - 1) + 1) % labeledData.length;
+        var p1 = labeledData[i1][procengine.randomInt(labeledData[i1].length)].clone();
+        var p2 = labeledData[i2][procengine.randomInt(labeledData[i2].length)].clone();
+        if(Math.random() < 0.5){
+          labeledData.splice(i1, 1);
+        }
+        else{
+          labeledData.splice(i2, 1);
+        }
+
         if(Math.random() < 0.5){
           var temp = p2;
           p2 = p1;
@@ -636,18 +579,18 @@ var procengine = {
         if(Math.random() < 0.5){
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             procengine.sign(p2.x - p1.x), 0), procengine.mapData.mapStart,
-            procengine.mapData.mapDig);
+            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             0, procengine.sign(p2.y - p1.y)), procengine.mapData.mapStart,
-            procengine.mapData.mapDig);
+            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
         }
         else{
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             0, procengine.sign(p2.y - p1.y)), procengine.mapData.mapStart,
-            procengine.mapData.mapDig);
+            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             procengine.sign(p2.x - p1.x), 0), procengine.mapData.mapStart,
-            procengine.mapData.mapDig);
+            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
         }
       }
     }
@@ -659,20 +602,38 @@ var procengine = {
   * @param dir {Point} the direction of connection
   * @param mapStart {Number} impassable tile
   * @param mapDig {Number} passable tile
+  * @param thickness (Number) the thickness of the connection
   */
-  connectPoints: function(map, p1, p2, dir, mapStart, mapDig){
+  connectPoints: function(map, p1, p2, dir, mapStart, mapDig, thickness){
+    var startThickness = Math.floor((thickness - 1) / 2);
     if(dir.x != 0){
+      while(p1.y + thickness - startThickness <= 0){
+        startThickness -= 1;
+      }
+      while(p1.y + thickness - startThickness >= map.length - 1){
+        startThickness += 1;
+      }
       while(p1.x != p2.x){
-        if(map[p1.y][p1.x] == mapStart){
-          map[p1.y][p1.x] = mapDig;
+        for(var y=0;y<thickness;y++){
+          if(map[p1.y + y - startThickness][p1.x] == mapStart){
+            map[p1.y + y - startThickness][p1.x] = mapDig;
+          }
         }
         p1.x += dir.x;
       }
     }
     if(dir.y != 0){
+      while(p1.x + thickness - startThickness <= 0){
+        startThickness -= 1;
+      }
+      while(p1.x + thickness - startThickness >= map[0].length - 1){
+        startThickness += 1;
+      }
       while(p1.y != p2.y){
-        if(map[p1.y][p1.x] == mapStart){
-          map[p1.y][p1.x] = mapDig;
+        for(var x=0;x<thickness;x++){
+          if(map[p1.y][p1.x + x - startThickness] == mapStart){
+            map[p1.y][p1.x + x - startThickness] = mapDig;
+          }
         }
         p1.y += dir.y;
       }
@@ -692,11 +653,17 @@ var procengine = {
       var rect = rects[i];
       if(startingRules.length > 0){
         procengine.roomInitialize(map, rect, startingRules);
-        procengine.printDebugMap(map);
+        if(procengine.testing.isDebug){
+          console.log("Initializing room " + i.toString() + ":\n");
+          procengine.printDebugMap(map);
+        }
       }
       for (var s = 0; s < simNumber; s++) {
         procengine.roomSimulate(map, rect, rules);
-        procengine.printDebugMap(map);
+        if(procengine.testing.isDebug){
+          console.log("Room " + i.toString() + " at simulation " + s.toString() + ":\n");
+          procengine.printDebugMap(map);
+        }
       }
     }
   },
@@ -826,7 +793,8 @@ var procengine = {
     procengine.diggerInfo.diggingData = [];
     procengine.diggerInfo.roomNumber = 1;
     procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
-    procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"];
+    procengine.handlingUnconnected.connectionType = [[]];
+    procengine.handlingUnconnected.connectionThickness = 1;
     procengine.identifiedNames.namesIndex = {};
     procengine.identifiedNames.indexNames = {};
     procengine.identifiedNames.neigbourhoods = {};
@@ -872,21 +840,6 @@ var procengine = {
       procengine.identifiedNames.namesIndex = {"solid":0, "empty":1};
     }
 
-    if(data.hasOwnProperty("mapData")){
-      var intializePieces = data["mapData"][2].split(":");
-      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[intializePieces[0].toLowerCase()];
-      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[intializePieces[1].toLowerCase()];
-      var dataPieces = data["mapData"][3].split(":");
-      procengine.handlingUnconnected.unconnected = procengine.Unconnected[dataPieces[0].trim().toLowerCase()];
-      procengine.handlingUnconnected.connectionType = procengine.ConnectionType[dataPieces[1].trim().toLowerCase()];
-    }
-    else{
-      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex["solid"];
-      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex["empty"];
-      procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
-      procengine.handlingUnconnected.connectionType = procengine.ConnectionType["plus"];
-    }
-
     if(data.hasOwnProperty("neighbourhoods")){
       for(var key in data["neighbourhoods"]){
         procengine.identifiedNames.neigbourhoods[key.trim().toLowerCase()] =
@@ -898,6 +851,24 @@ var procengine = {
         "plus": procengine.parseNeighbourhood("010,101,010"),
         "all": procengine.parseNeighbourhood("111","101","111")
       };
+    }
+
+    if(data.hasOwnProperty("mapData")){
+      var intializePieces = data["mapData"][2].split(":");
+      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[intializePieces[0].toLowerCase()];
+      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[intializePieces[1].toLowerCase()];
+      var dataPieces = data["mapData"][3].split(":");
+      procengine.handlingUnconnected.unconnected = procengine.Unconnected[dataPieces[0].trim().toLowerCase()];
+      procengine.handlingUnconnected.connectionType = procengine.identifiedNames.
+        neigbourhoods[dataPieces[1].trim().toLowerCase()];
+      procengine.handlingUnconnected.connectionThickness = parseInt(dataPieces[2].trim());
+    }
+    else{
+      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex["solid"];
+      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex["empty"];
+      procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
+      procengine.handlingUnconnected.connectionType = [[0,1,0],[1,0,1],[0,1,0]];
+      procengine.handlingUnconnected.connectionThickness = 1;
     }
 
     if(data.hasOwnProperty("startingRules")){
@@ -948,32 +919,43 @@ var procengine = {
     if(procengine.testing.isDebug){
       console.log("After constructing the matrix:\n");
       procengine.printDebugMap(map);
+      console.log("Room Automata:\n")
     }
     var rooms = procengine.getRooms(map);
-    if(procengine.testing.isDebug){
-      console.log("After digging the rooms:\n");
-      procengine.printDebugMap(map);
-      if(procengine.roomAutomata.simulationNumber > 0){
-        console.log("Room Automata:\n");
-      }
-    }
     procengine.applyCellularAutomata(map,
       procengine.roomAutomata.simulationNumber, rooms,
-      procengine.roomAutomata.startingRules, procengine.roomAutomata.rules);
+        procengine.roomAutomata.startingRules, procengine.roomAutomata.rules);
+    
     for(var i=0; i<rooms.length; i++){
-      procengine.fixUnconnected(map, rooms[i]);
+      procengine.fixUnconnected(map, rooms[i], procengine.handlingUnconnected.unconnected);
       if(procengine.testing.isDebug){
         console.log("After using connection Method on Room " + i.toString() + ":\n");
         procengine.printDebugMap(map);
       }
     }
-    if(procengine.testing.isDebug && procengine.smoothAutomata.simulationNumber > 0){
-        console.log("Smooth Automata:\n");
+
+    procengine.fixUnconnected(map, new procengine.Rectangle(1, 1, 
+      procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2), 
+      procengine.Unconnected["connect"]);
+    if(procengine.testing.isDebug){
+      console.log("Connecting rooms:\n");
+      procengine.printDebugMap(map);
     }
+    
     procengine.applyCellularAutomata(map,
       procengine.smoothAutomata.simulationNumber,
       [new procengine.Rectangle(0, 0, procengine.mapData.mapSize[0],
         procengine.mapData.mapSize[1])], [], procengine.smoothAutomata.rules);
+    if(procengine.smoothAutomata.simulationNumber > 0){
+        procengine.fixUnconnected(map, new procengine.Rectangle(1, 1, 
+          procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2), 
+          procengine.Unconnected["connect"]);
+    }
+    if(procengine.testing.isDebug && procengine.smoothAutomata.simulationNumber > 0){
+        console.log("Smooth Automata:\n");
+        procengine.printDebugMap(map);
+    }
+
     return procengine.getNamesMap(map);
   },
   /**
@@ -1002,7 +984,7 @@ var procengine = {
 };
 ///////////////////////////////Testing Code/////////////////////////////////////
 var data = {
-  "mapData": ["24x16", "equal:2x2:4", "solid:empty", "connect:plus"],
+  "mapData": ["24x8", "equal:2x2:4", "solid:empty", "connect:plus:1"],
   "names": ["empty", "solid"],
   "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
   "startingRules": ["solid:1","empty:2"],

@@ -90,5 +90,33 @@ In this example you are generating a level of size `15x7` with only 1 room (whic
 if (this tile is "empty" and have more than "5" neighbours based on the "all" neighbourhood) then
   change this tile to "solid"
 ```
+## What does these sections mean?
+As you can see, its super simple, the only thing need explaination is the input data object. Let's explain now in more detail how to construct the input object.
+
+The input data object is consisted of 6 sections. If any section is not existing, it is treated using default values for it. These sections are:
+- Names Section: Defines all tile names that are used in the rules. For example: `"names": ["empty", "solid"]` means we have two defined tiles named `empty` and `solid`.
+- Neighbourhoods Section: Defines all the neighbourhoods that are used in the rules. Neighbourhoods give the system the way to calculate the surrounding objects. For example: `"neighbourhoods": {"all":"111,101,111", "plus":"010,101,010"}` means we have two neighbourhoods, one is called `all` which consider all the 8 neighbours around the checked tile, while the second one `plus` only consider the ones in the north, south, east, and west tiles. 
+- Map Data Section: Contains all the information about the map required to be generated. For example: `"mapData": ["24x16", "equal:4x2:3", "solid:empty", "connect:plus"]` always consists of 4 parts. 
+  - The first part is the map size and in this example its `15x7` which means the width is `24` and height is `16`. 
+  - The second part contains information about how the level is divided and the way to divide it. In the example, it says we will have `3` rooms selected after dividing the map into `equal` rooms of grid `4` by `2`.
+  - The third part is the initial value to fill the map and the value used to dig through the map. For example `solid:empy` means that the initial map is totally filled with `solid`, and all the techniques used `empty` to dig through it.
+  - The last part is the way how the system deals with unconnected parts in the map. For example `connect:plus` means if there is an unconnected part of the map, try to connect it back and use the `plus` neighbourhood to check for connectivity.
+- Starting Rules Section: It defines how each room should be initialized. For example: `"startingRules": ["solid:1","empty:3"]` means that each tile in the room have `3` times chance to be `empty` while `1` time chance to be `solid`.
+- Room Rules Section: It defines the rules for the cellular automata that handles the rooms. For example: `"roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]`. The first object in the array is the number of simulation done using cellular automata, in this example only `2`. The rest are the rules for the automata, this rule says if the `tile` is empty and there is `more than` `5` tiles of `solid` then convert the tile to `solid`.
+- Smoothing Rules Section: This section is identical to the previous section where you define rules for cellular automata but these rules are used all over the whole map not on a certain rule and after finishing everything.
+
+### How to write the rules?
+- **Names Section:**
+```
+"names": ["name1", "name2", ..., "nameN"]
+```
+Its a list of all the defined names that the use going to use through all the rules. As seen they are defined as an array of string.
+- **Neighbourhoods Section:**
+```
+"neighbourhoods": {
+  "name1": "row1,row2,...rowN"
+  "name2"
+}
+```
 
 For a simple way to construct the initialization object try using this tool (link). For more interactive examples see this website (link).
