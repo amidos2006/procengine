@@ -15,7 +15,7 @@ var procengine = {
     /**
     * for debugging the engine
     */
-    isDebug: true
+    isDebug: false
   },
   /**
    * contains the initial information about the generated map
@@ -981,12 +981,12 @@ var procengine = {
   }
 };
 ///////////////////////////////Testing Code/////////////////////////////////////
-var data = {
-  "mapData": ["24x8", "equal:2x2:4", "solid:empty", "connect:plus:1"],
-  "names": ["empty", "solid"],
-  "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
-  "startingRules": ["solid:1","empty:2"],
-  "roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]
-};
-procengine.initialize(data);
-procengine.generateLevel();
+// var data = {
+//   "mapData": ["24x8", "equal:2x2:4", "solid:empty", "connect:plus:1"],
+//   "names": ["empty", "solid"],
+//   "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
+//   "startingRules": ["solid:1","empty:2"],
+//   "roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]
+// };
+// procengine.initialize(data);
+// procengine.generateLevel();
