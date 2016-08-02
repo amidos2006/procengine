@@ -877,7 +877,6 @@ var procengine = {
       }
     }
     else{
-      procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule("solid,2"));
       procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule("empty,1"));
     }
     procengine.fixRulesProbability(procengine.roomAutomata.startingRules,
@@ -890,8 +889,7 @@ var procengine = {
       }
     }
     else{
-      procengine.roomAutomata.simulationNumber = 2;
-      procengine.roomAutomata.rules.push(new procengine.Rule("empty,1,all,solid,out,0,5,solid"));
+      procengine.roomAutomata.simulationNumber = 0;
     }
 
     if(data.hasOwnProperty("smoothRules")){
