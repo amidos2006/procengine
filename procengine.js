@@ -431,16 +431,179 @@ var procengine = {
     return map;
   },
   /**
+   * Get the rooms using equal splitting
+   * @param map {Number[][]} the current map to be modified
+   * @param numX {Number} the number of splits in the x axis
+   * @param numY {Number} the number of splits in the y axis
+   * @param numRooms {Number} the numbers of rooms
+   * @returns {Rectangle[]} list of the rooms that 
+   */
+  getEqualRooms: function(map, numX, numY, numRooms){
+    var w = Math.floor(map[0].length / numX);
+    var h = Math.floor(map.length / numY);
+    var rooms = [];
+    for(var x=0; x<numX; x++){
+      for(var y=0; y<numY; y++){
+        rooms.push(new procengine.Rectangle(x * w + 1, y * h + 1, w - 2, h - 2));
+      }
+    }
+
+    while(rooms.length > numRooms){
+      var i = procengine.randomInt(rooms.length);
+      rooms.splice(i, 1);
+    }
+
+    return rooms;
+  },
+  /**
+   * Get the rooms using tree based splitting
+   * @param map {Number[][]} the current map to be modified
+   * @param minW {Number} the minimum width
+   * @param minH {Number} the minimum height
+   * @param numRooms {Number} the number of rooms
+   * @returns {Rectangle[]} list of the rooms after division
+   */
+  getTreeRooms: function(map, minW, minH, numRooms){
+    var rooms = [new procengine.Rectangle(1, 1, map[0].length - 2, map.length - 2)];
+
+    while(rooms.length < numRooms){
+      var index = procengine.getSuitableRoom(rooms, minW, minH);
+      var r = rooms[index];
+      rooms.splice(index, 1);
+      if(r.width > r.height){
+        if(r.width > 2 * minW){
+          var width = minW + procengine.randomInt(r.width - 2 * minW);
+          rooms.push(new procengine.Rectangle(r.x + 1, r.y + 1, width - 2, r.height - 2));
+          rooms.push(new procengine.Rectangle(r.x + width + 2, r.y + 1, r.width - width - 2, r.height - 2));
+        }
+        else{
+          rooms.push(new procengine.Rectangle(r.x + 1, r.y + 1, r.width/2 - 2, r.height - 2));
+          rooms.push(new procengine.Rectangle(r.x + r.width/2 + 2, r.y + 1, r.width/2 - 2, r.height - 2));
+        }
+      }
+      else{
+        if(r.height > 2 * minH){
+          var height = minH + procengine.randomInt(r.height - 2 * minH);
+          rooms.push(new procengine.Rectangle(r.x + 1, r.y + 1, r.width - 2, height - 2));
+          rooms.push(new procengine.Rectangle(r.x + 1, r.y + height + 1, r.width - 2, r.height - height - 2));
+        }
+        else{
+          rooms.push(new procengine.Rectangle(r.x + 1, r.y + 1, r.width - 2, r.height/2 - 2));
+          rooms.push(new procengine.Rectangle(r.x + 1, r.y + r.height/2 + 2, r.width - 2, r.height/2 - 2));
+        }
+      }
+    }
+
+    return rooms;
+  },
+  /**
+   * get the suitable room to split based on the size (bigger rooms have higher chance)
+   * @param rooms {Rectangle[]} list of all rooms
+   * @param minW {Number} minimum width to divide
+   * @param minH {Number} minimum height to divide
+   * @returns {Number} the best room index to split
+   */
+  getSuitableRoom: function(rooms, minW, minH){
+    var suitRooms = [];
+    var previousValue = 0;
+    for(var i=0; i<rooms.length; i++){
+      if(rooms[i].width > minW || rooms[i].height > minH){
+        suitRooms.push(new procengine.Point(i, previousValue + rooms[i].width * rooms[i].height));
+        previousValue = suitRooms[suitRooms.length - 1].y;
+      }
+    }
+
+    var randomValue = procengine.randomInt(previousValue);
+    for(var i=0; i<suitRooms.length; i++){
+      if(randomValue < suitRooms[i].y){
+        return suitRooms[i].x;
+      }
+    }
+
+    return procengine.randomInt(rooms.length);
+  },
+  /**
   * Dig the map to construct rooms where cellular automata can be applied
   * @param map {Number[][]} the current map to be modified
   * @return {Rectangle[]} array of all the rooms to be adjusted
   */
   getRooms: function(map){
-    return [new procengine.Rectangle(1, 1, procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2)];
+    var rooms = [new procengine.Rectangle(1, 1, procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2)]
+    if(procengine.diggerInfo.diggingType == procengine.DiggingType["equal"]){
+      rooms = procengine.getEqualRooms(map, procengine.diggerInfo.diggingData[0], 
+        procengine.diggerInfo.diggingData[1], procengine.diggerInfo.roomNumber);
+    }
+    else if(procengine.diggerInfo.diggingType == procengine.DiggingType["tree"]){
+      rooms = procengine.getTreeRooms(map, procengine.diggerInfo.diggingData[0], 
+        procengine.diggerInfo.diggingData[1], procengine.diggerInfo.roomNumber);
+    }
+
+    procengine.digRooms(map, rooms);
+    procengine.randomConnect(map, rooms);
+
+    return rooms;
   },
   /**
-  *
-  */
+   * Dig the list of rooms in the current map
+   * @param map {Number[][]} the current map to be modified
+   * @param rects {Rectangle[]} the current rooms to be digged
+   */
+  digRooms: function(map, rects){
+    for(var i=0; i<rects.length; i++){
+      var r = rects[i];
+      for(var x=0; x<r.width; x++){
+        for(var y=0; y<r.height; y++){
+          map[r.y + y][r.x + x] = procengine.mapData.mapDig;
+        }
+      }
+    }
+  },
+  /**
+   * connect the rooms randomly
+   * @param map {Number[][]} the current map to be modified
+   * @param rects {Rectangle[]} the current rooms to be connected
+   */
+  randomConnect: function(map, rects){
+    var rooms = [];
+    for(var i=0; i<rects.length; i++){
+      rooms.push(rects[i]);
+    }
+
+    while(rooms.length > 1){
+      var index1 = procengine.randomInt(rooms.length);
+      var center1 = new procengine.Point(Math.floor(rooms[index1].x + rooms[index1].width / 2), 
+        Math.floor(rooms[index1].y + rooms[index1].height / 2));
+      
+      var index2 = (index1 + 1 + procengine.randomInt(rooms.length - 1)) % rooms.length;
+      var center2 = new procengine.Point(Math.floor(rooms[index2].x + rooms[index2].width / 2), 
+        Math.floor(rooms[index2].y + rooms[index2].height / 2));
+      
+      if(Math.random() < 0.5){
+        var temp = center2;
+        center2 = center1;
+        center1 = temp;
+      }
+
+      procengine.connectPoints(map, center1, center2, 
+        new procengine.Point(procengine.sign(center2.x - center1.x), 0), 
+        procengine.mapData.mapStart, procengine.mapData.mapDig);
+      procengine.connectPoints(map, center1, center2, 
+        new procengine.Point(0, procengine.sign(center2.y - center1.y)), 
+        procengine.mapData.mapStart, procengine.mapData.mapDig);
+
+      if(Math.random() < 0.5){
+        rooms.splice(index1, 1);
+      }
+      else{
+        rooms.splice(index2, 1);
+      }
+    }
+  },
+  /**
+   * connect unconnected objects in a certain room
+   * @param map {Number[][]} the current map to be modified
+   * @param rect {Rectangle} the current selected room
+   */
   fixUnconnected: function(map, rect){
     var labeledData = procengine.labelMap(map, rect, procengine.handlingUnconnected.connectionType,
       procengine.mapData.mapStart);
@@ -521,7 +684,7 @@ var procengine = {
   * @param simNumber {Number} number of simulations
   * @param rects {Rectangle[]} an array of rooms
   * @param startingRules {ReplacingRule[]} the intializing rules for the
-                        cellular automata
+  *                     cellular automata
   * @param rules {Rule[]} the cellular automata rules
   */
   applyCellularAutomata: function(map, simNumber, rects, startingRules, rules){
@@ -839,7 +1002,7 @@ var procengine = {
 };
 ///////////////////////////////Testing Code/////////////////////////////////////
 var data = {
-  "mapData": ["15x7", "equal:1x1:1", "solid:empty", "connect:plus"],
+  "mapData": ["24x16", "equal:2x2:4", "solid:empty", "connect:plus"],
   "names": ["empty", "solid"],
   "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
   "startingRules": ["solid:1","empty:2"],
