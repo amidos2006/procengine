@@ -129,7 +129,7 @@
                 </ul>
             </div>
 
-            <button onclick="addNodeToSectionName('neighbourhoodsSection', 'definedNeighbourPattern')">(+) Neighbourhood</button>
+            <button class="generateButton" onclick="addNodeToSectionName('neighbourhoodsSection', 'definedNeighbourPattern')">(+) Neighbourhood</button>
             <hr/>
             <h4>Room Data:</h4>
             <div>
@@ -146,7 +146,7 @@
                 </ul>
             </div>
             
-            <button onclick="addNodeToSectionName('startingRulesSection', 'replacingRulePattern')">(+) Rule</button>
+            <button class="generateButton" onclick="addNodeToSectionName('startingRulesSection', 'replacingRulePattern')">(+) Rule</button>
             <hr/>
             <h4>Room Rules:</h4>
             <div>
@@ -154,9 +154,8 @@
                 <hr/>
                 <ul id="roomRulesSection"></ul>
             </div>
-            <div>
-                <button onclick="addNodeToSectionName('roomRulesSection','cellularAutomataPattern')">(+) Rule</button>
-            </div>
+            
+            <button class="generateButton" onclick="addNodeToSectionName('roomRulesSection','cellularAutomataPattern')">(+) Rule</button>
             <hr/>
             <h4>Smooth Rules:</h4>
             <div>
@@ -165,7 +164,7 @@
                 <ul id="smoothRulesSection"></ul>
             </div>
             
-            <button onclick="addNodeToSectionName('smoothRulesSection','cellularAutomataPattern')">(+) Rule</button>
+            <button class="generateButton" onclick="addNodeToSectionName('smoothRulesSection','cellularAutomataPattern')">(+) Rule</button>
             <hr/>
             <button onclick="generateData()" class="generateButton">Generate</button>
         </div>
