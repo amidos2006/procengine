@@ -6,6 +6,8 @@
                 padding: 0px;
                 margin: 0px;
                 font-family: Arial;
+                overflow-y:hidden;
+                height:100%;
             }
             h1{
                 width:100%;
@@ -52,12 +54,14 @@
                 left: 0%;
                 top: 45px;
                 width:70%;
+                height:93%;
                 margin-left:5px;
-                margin-right:5px;
+                padding-right:5px;
                 border-right: solid 1px black;
+                overflow-y: scroll;
             }
             .generateButton{
-                width:95%;
+                width:100%;
             }
             
             .rightPanel{
@@ -66,7 +70,8 @@
                 top:45px;
                 width:28%;
                 margin-left:15px;
-                border-left: solid 1px black;
+                height:93%;
+                overflow-y: hidden;
             }
             .output{
                 font-family:"Courier New";
@@ -98,7 +103,7 @@
                     <ul>
                         <li><div><label>Name: </label><Input type="textbox" value="solid"/><label> Count: </label><Input type="textbox" value="1"/></div></li>
                     </ul>
-                    <button onclick="addNodeToSectionNode(this,'replacingRulePattern')">(+) Replacing Rule</button>
+                    <button class="generateButton" onclick="addNodeToSectionNode(this,'replacingRulePattern')">(+) Replacing Rule</button>
                  </div>
                  <hr/>
              </div>
