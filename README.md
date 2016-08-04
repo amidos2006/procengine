@@ -47,7 +47,7 @@ These are some examples of the results:
 111111111111111
 ```
 
-For a simple way to construct the initialization object try using this tool [link](http://cdn.rawgit.com/amidos2006/procengine/master/Example/index.html).
+For a simple way to construct the initialization object try using this tool ([link](http://cdn.rawgit.com/amidos2006/procengine/master/Example/index.html)).
 
 This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating the world (in Emoji)`.
 
@@ -205,4 +205,4 @@ This section defines the rules for the cellular automata used to generate the ro
 ```
 Its exactly identical to Room Automata Section the only difference is these rules are applied on the whole map after finishing and not on specific room.
 
-For a simple way to construct the initialization object try using this tool [link](http://cdn.rawgit.com/amidos2006/procengine/master/Example/index.html).
+For a simple way to construct the initialization object try using this tool ([link](http://cdn.rawgit.com/amidos2006/procengine/master/Example/index.html)).
