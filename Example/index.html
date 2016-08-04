@@ -1,0 +1,352 @@
+<html>
+    <head>
+        <title>Interactive Tool</title>
+        <style>
+            body{
+                padding: 0px;
+                margin: 0px;
+                font-family: Arial;
+            }
+            h1{
+                width:100%;
+                height:40px;
+                background-color:black;
+                color:white;
+                text-align: center;
+                padding-top:5px;
+            }
+            h4{
+                margin-bottom: 5px;
+                margin-top: 5px;
+            }
+            label{
+                margin-bottom: 2px;
+                margin-top: 2px;
+                font-size:12px;
+            }
+            input{
+                margin-bottom: 2px;
+                margin-top: 2px;
+                font-family: Arial;
+            }
+            button{
+                font-family: Arial;
+            }
+            option{
+                font-family: Arial;
+            }
+            select{
+                font-family: Arial;
+            }
+            hr{
+                width:100%;
+            }
+            ul{
+                list-style-type: none;
+                padding:0px;
+                margin:0px;
+            }
+
+            .leftPanel{
+                position: absolute;
+                left: 0%;
+                top: 45px;
+                width:70%;
+                height:100%;
+                margin-left:5px;
+                margin-right:5px;
+                border-right: solid 1px black;
+            }
+            .generateButton{
+                width:100%;
+            }
+            
+            .rightPanel{
+                position: absolute;
+                left:70%;
+                top:45px;
+                width:28%;
+                height:100%;
+                margin-left:15px;
+            }
+            .output{
+                font-family:"Courier New";
+                font-size:12;
+                width:100%;
+                height:40%;
+            }
+
+            .hiddenPanel{
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="hiddenPanel">
+            <div id="replacingRulePattern" class="replacingRule">
+                <label>Name: </label><Input type="textbox" value="empty"/><label> Count: </label><Input type="textbox" value="1"/><button onclick="deleteNode(this)">(x)</button>
+            </div>
+            <div id="definedNamePattern" class="definedName"><Input type="textbox" value="newTile"/><button onclick="deleteNode(this)">(x)</button></div>
+            <div id="definedNeighbourPattern" class="definedNeighbour"><label>Name: </label><Input type="textbox" value="newNeighbour"/><label> Value: </label><Input type="textbox" value="010,101,010"/><button onclick="deleteNode(this)">(x)</button></div>
+            <div id="cellularAutomataPattern" class="cellularAutomata">
+                <label>Tile: </label><Input type="textbox" value="empty"/>
+                <label> Neighboorhood: </label><Input type="textbox" value="plus"/>
+                <label> Check: </label><Input type="textbox" value="solid"/>
+                <label> Condition:</label> <select><option value="out">Out</option><option value="in">In</option></select><label> lowBound: </label><Input type="textbox" value="0"/><label> highBound: </label><Input type="textbox" value="5"/>
+                <button onclick="deleteNode(this)">(x)</button>
+                <div><br/><b>Replacing Rules:</b></div>
+                <div class="row">
+                    <ul>
+                        <li><div><label>Name: </label><Input type="textbox" value="solid"/><label> Count: </label><Input type="textbox" value="1"/></div></li>
+                    </ul>
+                    <button onclick="addNodeToSectionNode(this,'replacingRulePattern')">(+) Replacing Rule</button>
+                 </div>
+                 <hr/>
+             </div>
+        </div>
+        <h1>ProcEngine Interactive Tool</h1>
+        <div class="leftPanel">
+            <h4>Map Data:</h4>
+            <ul id="mapDataSection">
+                <li><label>Map Size: </label><Input type="input" value="24"/><label> x </label><Input type="input" value="16"/></li>
+                <li><label>Room Division: </label><select><option value="equal">Equal</option><option value="tree">Tree</option></select><label> Parameters: </label><Input type="textbox" value="2"/><label> x </label><Input input="textbox" value="2"/><label> Number of rooms: </label><Input type="textbox" value="3"/></li>
+            </ul>
+            <hr/>
+            <h4>Names:</h4>
+            <div>
+                <ul id="namesSection">
+                    <li><div><Input class="definedName" type="textbox" value="empty"/></div></li>
+                    <li><div><Input class="definedName" type="textbox" value="solid"/></div></li>
+                </ul>
+            </div>
+            <div>
+                <button onclick="addNodeToSectionName('namesSection', 'definedNamePattern')">(+) Name</button>
+            </div>
+            <hr/>
+            <h4>Neighbourhoods:</h4>
+            <div>
+                <ul id="neighbourhoodsSection">
+                    <li><div><label>Name: </label><Input type="textbox" value="plus"/><label> Value: </label><Input type="textbox" value="010,101,010"/></div></li>
+                </ul>
+            </div>
+            <div>
+                <button onclick="addNodeToSectionName('neighbourhoodsSection', 'definedNeighbourPattern')">(+) Neighbourhood</button>
+            </div>
+            <hr/>
+            <h4>Room Data:</h4>
+            <div>
+                <ul id="roomDataSection">
+                    <li><label>Initial: </label><Input type="textbox" value="solid"/><label> Dig: </label><Input type="textbox" value="empty"/></li>
+                    <li><label>Fix Type: </label><select><option value="connect">Connect</option><option value="delete">Delete</option></select><label> Neighboorhood: </label><Input type="textbox" value="plus"/><label> Thickness: </label><Input type="textbox" value="1"/></li>
+                </ul>
+            </div>
+            <hr/>
+            <h4>Starting Rules:</h4>
+            <div>
+                <ul id="startingRulesSection">
+                    <li><div><label>Name: </label><Input type="textbox" value="empty"/><label> Count: </label><Input type="textbox" value="1"/></div></li>
+                </ul>
+            </div>
+            <div>
+                <button onclick="addNodeToSectionName('startingRulesSection', 'replacingRulePattern')">(+) Rule</button>
+            </div>
+            <hr/>
+            <h4>Room Rules:</h4>
+            <div>
+                <label>SimNumber: </label><Input id="roomSim" type="textbox" value="0"/>
+                <hr/>
+                <ul id="roomRulesSection"></ul>
+            </div>
+            <div>
+                <button onclick="addNodeToSectionName('roomRulesSection','cellularAutomataPattern')">(+) Rule</button>
+            </div>
+            <hr/>
+            <h4>Smooth Rules:</h4>
+            <div>
+                <label>SimNumber: </label><Input id="smoothSim" type="textbox" value="0"/>
+                <hr/>
+                <ul id="smoothRulesSection"></ul>
+            </div>
+            <div>
+                <button onclick="addNodeToSectionName('smoothRulesSection','cellularAutomataPattern')">(+) Rule</button>
+            </div>
+            <hr/>
+            <button onclick="generateData()" class="generateButton">Generate</button>
+        </div>
+        <div class="rightPanel">
+            <h4>Input Data:</h4>
+            <textarea id="inputData" class="output" readonly></textarea>
+            <hr/>
+            <h4>Generated Map:</h4>
+            <textarea id="generatedMap" class="output" readonly></textarea>
+        </div>
+    </body>
+    <script src="http://cdn.rawgit.com/amidos2006/procengine/master/procengine.js"></script>
+    <script>
+        function addNodeToSectionName(sectionName, cloneName){
+            var node = document.createElement("li");
+            var textBox = document.getElementById(cloneName);
+            node.appendChild(textBox.cloneNode(true));
+            var addedSection = document.getElementById(sectionName);
+            addedSection.appendChild(node);
+        }
+
+        function addNodeToSectionNode(sectionNode, cloneName){
+            var node = document.createElement("li");
+            var textBox = document.getElementById(cloneName);
+            node.appendChild(textBox.cloneNode(true));
+            sectionNode.parentNode.children[0].appendChild(node);
+        }
+
+        function deleteNode(node){
+            node.parentNode.parentNode.parentNode.removeChild(node.parentNode.parentNode);
+        }
+
+        function generateData(){
+            var data = getData();
+            printData(data);
+            var level = getExample(data);
+            printExample(level);
+        }
+
+        function getData(){
+            var data = {};
+            
+            var data = {
+                "mapData": [],
+                "names": [],
+                "neighbourhoods": {},
+                "startingRules": [],
+                "roomRules": [],
+                "smoothRules": []
+            };
+
+            var mapDataSection = document.getElementById("mapDataSection");
+            var roomDataSection = document.getElementById("roomDataSection");
+
+            data["mapData"].push(mapDataSection.children[0].children[1].value + "x" + mapDataSection.children[0].children[3].value);
+            data["mapData"].push(mapDataSection.children[1].children[1].value + ":" + mapDataSection.children[1].children[3].value + "x" + mapDataSection.children[1].children[5].value + ":" + mapDataSection.children[1].children[7].value);
+            data["mapData"].push(roomDataSection.children[0].children[1].value + ":" + roomDataSection.children[0].children[3].value);
+            data["mapData"].push(roomDataSection.children[1].children[1].value + ":" + roomDataSection.children[1].children[3].value + ":" + roomDataSection.children[1].children[5].value);
+
+            var namesSection = document.getElementById("namesSection");
+            for(var i=0; i<namesSection.children.length; i++){
+                data["names"].push(namesSection.children[i].children[0].children[0].value);
+            }
+
+            var neighbourhoodsSection = document.getElementById("neighbourhoodsSection");
+            for(var i=0; i<neighbourhoodsSection.children.length; i++){
+                data["neighbourhoods"][neighbourhoodsSection.children[i].children[0].children[1].value] = neighbourhoodsSection.children[i].children[0].children[3].value;
+            }
+
+            var startingRulesSection = document.getElementById("startingRulesSection");
+            for(var i=0; i<startingRulesSection.children.length; i++){
+                data["startingRules"].push(startingRulesSection.children[i].children[0].children[1].value + ":" + startingRulesSection.children[i].children[0].children[3].value);
+            }
+
+            var roomRulesSection = document.getElementById("roomRulesSection");
+            data["roomRules"].push(document.getElementById("roomSim").value);
+            for(var i=0; i<roomRulesSection.children.length; i++){
+                var value = roomRulesSection.children[i].children[0].children[1].value + ", " + 
+                    roomRulesSection.children[i].children[0].children[3].value + ", " + 
+                    roomRulesSection.children[i].children[0].children[5].value + ", " +
+                    roomRulesSection.children[i].children[0].children[7].value + ", " +
+                    roomRulesSection.children[i].children[0].children[9].value + ", " +
+                    roomRulesSection.children[i].children[0].children[11].value + ", ";
+                for(var k=0; k<roomRulesSection.children[i].children[0].children[14].children[0].children.length; k++){
+                    value += roomRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[1].value + ":" + roomRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[3].value + "|";
+                }
+                value = value.substring(0, value.length-1);
+
+                data["roomRules"].push(value);
+            }
+
+            var smoothRulesSection = document.getElementById("smoothRulesSection");
+            data["smoothRules"].push(document.getElementById("smoothSim").value);
+            for(var i=0; i<smoothRulesSection.children.length; i++){
+                var value = smoothRulesSection.children[i].children[0].children[1].value + ", " + 
+                    smoothRulesSection.children[i].children[0].children[3].value + ", " + 
+                    smoothRulesSection.children[i].children[0].children[5].value + ", " +
+                    smoothRulesSection.children[i].children[0].children[7].value + ", " +
+                    smoothRulesSection.children[i].children[0].children[9].value + ", " +
+                    smoothRulesSection.children[i].children[0].children[11].value + ", ";
+                for(var k=0; k<smoothRulesSection.children[i].children[0].children[14].children[0].children.length; k++){
+                    value += smoothRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[1].value + ":" + 
+                    smoothRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[3].value + "|";
+                }
+                value = value.substring(0, value.length-1);
+
+                data["smoothRules"].push(value);
+            }
+
+            return data;
+        }
+
+        function printData(data){
+            var textBox = document.getElementById("inputData");
+            var result = "var data={\n";
+            
+            result += "\t\"mapData\":[";
+            for(var i=0; i<data["mapData"].length; i++){
+                result += "\"" + data["mapData"][i] + "\", ";
+            }
+            result = result.substring(0, result.length - 2);
+            result += "],\n";
+
+            result += "\t\"names\":[";
+            for(var i=0; i<data["names"].length; i++){
+                result += "\"" + data["names"][i] + "\", ";
+            }
+            result= result.substring(0, result.length - 2);
+            result += "],\n";
+
+            result += "\t\"neighbourhoods\":{\n";
+            for(var key in data["neighbourhoods"]){
+                result += "\t\t\"" + key + "\": \"" + data["neighbourhoods"][key] + "\",\n";
+            }
+            result= result.substring(0, result.length - 2);
+            result += "\n\t},\n";
+
+            result += "\t\"startingRules\":[";
+            for(var i=0; i<data["startingRules"].length; i++){
+                result += "\"" + data["startingRules"][i] + "\", ";
+            }
+            result= result.substring(0, result.length - 2);
+            result += "],\n";
+
+            result += "\t\"roomRules\":[";
+            for(var i=0; i<data["roomRules"].length; i++){
+                result += "\"" + data["roomRules"][i] + "\", ";
+            }
+            result= result.substring(0, result.length - 2);
+            result += "],\n";
+
+            result += "\t\"smoothRules\":[";
+            for(var i=0; i<data["smoothRules"].length; i++){
+                result += "\"" + data["smoothRules"][i] + "\", ";
+            }
+            result= result.substring(0, result.length - 2);
+            result += "]\n";
+
+            result += "};";
+            textBox.value = result;
+        }
+
+        function getExample(data){
+            procengine.initialize(data);
+            return procengine.generateLevel();
+        }
+
+        function printExample(data){
+            var textBox = document.getElementById("generatedMap");
+            var stringData = "";
+            for(var y=0; y<data.length; y++){
+                for(var x=0; x<data[y].length; x++){
+                    stringData += procengine.identifiedNames.namesIndex[data[y][x]];
+                }
+                stringData += "\n";
+            }
+            textBox.value = stringData;
+        }
+    </script>
+</html>
