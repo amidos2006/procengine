@@ -1,5 +1,5 @@
 /**
- * ProcEngine v1.0.0
+ * ProcEngine v1.1.0
  * @author Ahmed Khalifa (Amidos)
  */
 declare module procengine{

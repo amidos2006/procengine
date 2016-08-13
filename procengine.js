@@ -1,5 +1,5 @@
 /**
- * ProcEngine v1.0.0
+ * ProcEngine v1.1.0
  * @author Ahmed Khalifa (Amidos)
  */
 var procengine = {
@@ -9,13 +9,17 @@ var procengine = {
    */
   testing:{
     /**
-    * to make sure people call Initialize function before generate
-    */
+     * to make sure people call Initialize function before generate
+     */
     isInitialized: false,
     /**
-    * for debugging the engine
-    */
-    isDebug: false
+     * for debugging the engine
+     */
+    isDebug: true,
+    /**
+     * current number of objects spawned from this type
+     */
+    currentCounts: {},
   },
   /**
    * contains the initial information about the generated map
@@ -33,171 +37,246 @@ var procengine = {
     * the tile used to dig through the map
     */
     mapDig: -1
-    
   },
   /**
-   * 
+   * contains all the information about how to divide the map into rooms
+   * and initializing them
    */
-  diggerInfo: {
+  roomData: {
     /**
-     * 
+     * type used for dividing the rooms
      */
-    diggingType: -1,
+    roomType: -1,
     /**
-     * 
+     * parameter used for the room divison technique
      */
-    diggingData: [],
+    roomParameter: [],
     /**
-    * number of rooms to be generated in the level
-    */
-    roomNumber: -1
-  },
-  /**
-   * how to handle unconnected parts
-   */
-  handlingUnconnected: {
-    /**
-    * handling the unconnected areas
-    */
-    unconnected: -1,
-    /**
-    * checking unconnected areas
-    */
-    connectionType: [[]],
-    /**
-     * how thick is the connection between two rooms
+     * number of rooms to be generated in the level
      */
-    connectionThickness: 1
+    roomNumber: -1,
+    /**
+     * starting rules that is used to starting distribution
+     */
+    startingRules: [],
   },
   /**
    * the names and neighbourhoods idendified by the user
    */
   identifiedNames:{
     /**
-    * dictionary contains all defined names and coressponding ids
-    */
+     * dictionary contains all defined names and coressponding ids
+     */
     namesIndex: {},
     /**
-    * dictionary contains all defined ids and coressponding names
-    */
+     * dictionary contains all defined ids and coressponding names
+     */
     indexNames: {},
     /**
-    * dictionary for all the defined neigbourhoods
-    */
+     * dictionary for the maximum size for each tile type
+     */
+    maxCounts: {},
+    /**
+     * dictionary for all the defined neigbourhoods
+     */
     neigbourhoods: {}
   },
   /**
-  * contains all the information about the cellular automata
-  */
-  roomAutomata:{
-    /**
-    * number of simulations for the cellular automata
-    */
-    simulationNumber: -1,
-    /**
-    * starting rules that is used to starting distribution
-    */
-    startingRules: [],
-    /**
-    * rules for the cellular automata
-    */
-    rules: []
-  },
-  /**
-  * contains all the information about smoothing cellular automata
-  */
-  smoothAutomata:{
-    /**
-    * number of smooth simulations
-    */
-    simulationNumber: -1,
-    /**
-    * rules for the smoothing cellular automata
-    */
-    rules:[]
-  },
+   * all the cellular automata used to generate the map
+   */
+  generationRules: [],
   ///////////////////////////////Classes////////////////////////////////////////
   /**
-  * ConditionType is an enumarator with two values "in" or "out"
-  */
-  ConditionType: {
-    "in": 0,
-    "out": 1
+   * Condition is an enumarator with multiple values
+   */
+  Condition: {
+    "<=": 0,
+    ">=": 1,
+    ">": 2,
+    "<": 3,
+    "==": 4,
+    "!=": 5
   },
   /**
-  * Type to treat isolated areas
-  */
-  Unconnected: {
+   * Shows how the condition is handled by anding them or by oring them
+   */
+  ConditionType: {
+    "and": 0,
+    "or": 1
+  },
+  /**
+   * Type to treat isolated areas
+   */
+  ConnectionType: {
     "connect":0,
     "delete":1
   },
   /**
    * used to determine the type of map division
    */
-  DiggingType: {
+  RoomType: {
     "equal": 0,
     "tree": 1
   },
   /**
-  * ReplacingRule class contains data about inserting a tile using probabilities
-  * @param dataLine {string} "tile:probability"
-  * @member tile {Number} the tile that should appear in a specific tile
-  * @member probability {Number} the probability of this tile to show
-  * @function toString {function} return a string that contains all the data
-  */
+   * used to determine how the generation rules will be applied
+   * on all the map or on each room
+   */
+  GenerationType: {
+    "map": 0,
+    "room": 1
+  },
+  /**
+   * ReplacingRule class contains data about inserting a tile using probabilities
+   * @param dataLine {string} "tile:probability"
+   * @member tile {Number} the tile that should appear in a specific tile
+   * @member probability {Number} the probability of this tile to show
+   * @function toString {String} return a string that contains all the data
+   */
   ReplacingRule: function(dataLine){
     var pieces = dataLine.split(":");
     this.tile = procengine.identifiedNames.namesIndex[pieces[0].trim().toLowerCase()];
     this.probability = parseFloat(pieces[1].trim());
     this.toString = function(){
-      return procengine.identifiedNames.indexNames[this.tile] + " " + this.probability.toString();
+      return procengine.identifiedNames.indexNames[this.tile] + ":" + this.probability.toString();
     };
   },
   /**
-  * Rule class contains data about cellular automata rules
-  * @param dataLine {string} "tile,neighbourhood,checkTile,conditionType,
-  *                           lowBoundary,highBoundary,ReplacingRule|
-  *                           ReplacingRule|..."
-  * @member tile {Number} if the current x,y is this tile
-  * @member neighbourhood {Number[][]} the positions of tiles to check
-  * @member checkTile {Number} the tile type to check
-  * @member conditionType {ConditionType} in "lowBoundary<value<highBoundary" or
-  *                                       out "lowBoundary>value<highBoundary"
-  * @member lowBoundary {Number} the lower bound condition
-  * @member highBoundary {Number} the high bound condition
-  * @member replacingRules {ReplacingRule[]} the rules that are used in applying
-  * @function toString {function}
-  */
+   * ConditionRule class contains data about condition for cellular automata
+   * @param dataLine {String} "tile condition value"
+   * @member condition {Condition} the comparison type (>,<,>=,<=,==,!=)
+   * @member tile {Number} the tile type to check
+   * @member value {Number} the value to check with
+   * @function toString {String} return a string that contains all the data
+   */
+  ConditionRule: function(dataLine){
+    var pieces = [];
+    for(var c in procengine.Condition){
+      pieces = dataLine.trim().split(c);
+      if(pieces.length > 1){
+        this.condition = procengine.Condition[c];
+        this.tile = procengine.identifiedNames.namesIndex[pieces[0].toLowerCase().trim()];
+        this.value = parseInt(pieces[1].trim());
+        break;
+      }
+    }
+    this.toString = function(){
+      return procengine.identifiedNames.indexNames[this.tile] + ":" + this.condition + ":" + this.value;
+    }
+  },
+  /**
+   * Rule class contains data about cellular automata rules
+   * @param dataLine {string} "tile,neighbourhood,ConditionType,
+   *                           ConditionRule|ConditionRule|...,
+   *                           ReplacingRule|ReplacingRule|..."
+   * @member tile {Number} if the current x,y is this tile
+   * @member neighbourhood {Number[][]} the positions of tiles to check
+   * @member conditionType {ConditionType} "or" if the condition rules are ored together or
+   *                                       "and" if the condition rules are anded together
+   * @member conditions {ConditionRule[]} the condition rules to be checked
+   * @member replacingRules {ReplacingRule[]} the rules that are used in applying
+   * @function toString {String} return a string that contains all the data
+   */
   Rule: function(dataLine){
     var pieces = dataLine.split(",");
     this.tile = procengine.identifiedNames.namesIndex[pieces[0].trim().toLowerCase()];
     this.neighbourhood = procengine.identifiedNames.neigbourhoods[pieces[1].trim().toLowerCase()];
-    this.checkTile = procengine.identifiedNames.namesIndex[pieces[2].trim().toLowerCase()];
-    this.conditionType = procengine.ConditionType[pieces[3].trim().toLowerCase()];
-    this.lowBoundary = parseInt(pieces[4].trim().toLowerCase());
-    this.highBoundary = parseInt(pieces[5].trim().toLowerCase());
-    pieces = pieces[6].split("|");
+    this.conditionType = procengine.ConditionType[pieces[2].trim().toLowerCase()];
+    var parts = pieces[3].split("|");
+    this.conditions = [];
+    for(var i=0; i < parts.length; i++){
+      this.conditions.push(new procengine.ConditionRule(parts[i].trim()));
+    }
+    parts = pieces[4].split("|");
     this.replacingRules = [];
-    for (var i = 0; i < pieces.length; i++) {
-      this.replacingRules.push(new procengine.ReplacingRule(pieces[i]));
+    for (var i = 0; i < parts.length; i++) {
+      this.replacingRules.push(new procengine.ReplacingRule(parts[i]));
     }
     procengine.fixRulesProbability(this.replacingRules,
       procengine.getTotalProbability(this.replacingRules));
     this.toString = function(){
       return procengine.identifiedNames.indexNames[this.tile] + " " +
-        procengine.identifiedNames.indexNames[this.checkTile] + " " + this.conditionType + " " +
-        this.lowBoundary.toString() + " " + this.highBoundary.toString() + " [" +
-        this.replacingRules.toString() + "]";
+        procengine.identifiedNames.indexNames[this.conditionType] + " " + 
+        "[" + this.conditions.toString() + "] " +
+        "[" + this.replacingRules.toString() + "]";
     };
   },
   /**
-  * Point data structure
-  * @param x
-  * @param y
-  * @member x
-  * @member y
-  * @function clone
-  */
+   * UnconnectedRule class contains data for the for how to handle islands
+   * @param dataLine {String} "ConnectionType:neighbourhood:Thickness"
+   * @member connectionType {ConnectionType} The type of solving unconnected islands "connect" or "delete"
+   * @member connectionCheck {Number[][]} The neighbourhood that is used to check if the islands are
+   *                                      connected or not
+   * @member connectionThickness {Number} Only valid if the connectionType is "connect" and it define
+   *                                      how thick the line that connects
+   * @function toString {String} return a string that contains all the data
+   */
+  UnconnectedRule: function(dataLine){
+    var pieces = dataLine.trim().split(":");
+    this.connectionType = procengine.ConnectionType[pieces[0].toLowerCase().trim()];
+    this.connectionCheck = procengine.identifiedNames.neigbourhoods[pieces[1].toLowerCase().trim()];
+    if(this.connectionType == procengine.ConnectionType["connect"]){
+      this.connectionThickness = parseInt(pieces[2].trim());
+    }
+    this.toString = function(){
+      return this.connectionType + " [" + this.connectionCheck + "]";
+    }
+  },
+  /**
+   * GenerationRule class contain data about the used cellular automata
+   * @param dataObject {Object} {"genData":["simulationNumber", 
+   *                             "generationType:generationParameter,generationParameter,...",
+   *                             "UnconnectedRule"], 
+   *                             "rules":["Rule", "Rule", ...]}
+   * @member simulationNumber {Number} number of simulations
+   * @member generationType {GenerationType} defines how the cellular automata will be applied 
+   *                                         either "map" or "room"
+   * @member generationParameter {Number[]} parameters used by the generationType
+   * @member unconnectedRule {UnconnectedRule} shows how the current cellular automata deals with islands
+   * @member rules {Rule[]} list of the rules that will be applied during using cellular automata 
+   * @function toString {String} return a string that contains all the data
+   */
+  GenerationRule: function(dataObject){
+    this.simulationNumber = 0;
+    this.generationType = procengine.GenerationType["room"];
+    this.generationParameter = [-1];
+    this.unconnectedRule = new procengine.UnconnectedRule("connect:plus:1");
+
+    if(dataObject.hasOwnProperty("genData")){
+      this.simulationNumber = parseInt(dataObject["genData"][0].trim());
+      var pieces = dataObject["genData"][1].trim().split(":");
+      this.generationType = procengine.GenerationType[pieces[0].toLowerCase()];
+      pieces = pieces[1].toLowerCase().split(",");
+      this.generationParameter = [];
+      for(var i = 0; i < pieces.length; i++){
+        this.generationParameter.push(parseInt(pieces[i].trim()));
+      }
+      this.unconnectedRule = new procengine.UnconnectedRule(dataObject["genData"][2].trim());
+    }
+
+    this.rules = [];
+    if(dataObject.hasOwnProperty("rules")){
+      for(var i=0; i < dataObject["rules"].length; i++){
+        this.rules.push(new procengine.Rule(dataObject["rules"][i]));
+      }
+    }
+
+    this.toString = function(){
+      return "[simNum:" + this.simulationNumber + " " + 
+        "genType:" + this.generationType + " " + 
+        "genParam:" + this.generationParameter + "\n" + 
+        "connection:" + this.unconnectedRule + "\n" + 
+        "rules:[" + this.rules.toString() + "]]";
+    }
+  },
+  /**
+   * Point data structure
+   * @param x
+   * @param y
+   * @member x
+   * @member y
+   * @function clone {Point}
+   */
   Point: function(x, y){
     this.x = x;
     this.y = y;
@@ -206,16 +285,16 @@ var procengine = {
     }
   },
   /**
-  * Rectangle class to handle a rectangle data
-  * @param x {Number} x position for the rectangle
-  * @param y {Number} y position for the rectangle
-  * @param width {Number} rectangle width
-  * @param height {Number} rectangle height
-  * @member x {Number} x position for the rectangle
-  * @member y {Number} y position for the rectangle
-  * @member width {Number} rectangle width
-  * @member height {Number} rectangle height
-  */
+   * Rectangle class to handle a rectangle data
+   * @param x {Number} x position for the rectangle
+   * @param y {Number} y position for the rectangle
+   * @param width {Number} rectangle width
+   * @param height {Number} rectangle height
+   * @member x {Number} x position for the rectangle
+   * @member y {Number} y position for the rectangle
+   * @member width {Number} rectangle width
+   * @member height {Number} rectangle height
+   */
   Rectangle: function(x, y, width, height){
     this.x = x;
     this.y = y;
@@ -224,28 +303,43 @@ var procengine = {
   },
   //////////////////////////Private Functions///////////////////////////////////
   /**
-  * Gets a random integer number
-  * @param max {Number} maximum boundary
-  * @return {Number} random integer number
-  */
+   * Gets a random integer number
+   * @param max {Number} maximum boundary
+   * @returns {Number} random integer number
+   */
   randomInt: function(max){
     return Math.floor(Math.random() * max);
   },
   /**
-  * get the sign of the number
-  * @param number {Number} the current number to check
-  * @return {Number} the sign of the number (+1, -1, 0)
-  */
+   * get the sign of the number
+   * @param number {Number} the current number to check
+   * @returns {Number} the sign of the number (+1, -1, 0)
+   */
   sign: function(number){
     if(number > 0) return 1;
     if(number < 0) return -1;
     return 0;
   },
   /**
-  * get the biggest label in the map
-  * @param labeledPoints {Point[][]} the labeledPoints on the map
-  * @return {Number} the label of the largest area
-  */
+   * Shuffle array elements in place
+   * @param array {Object[]} the array required to be shuffled
+   */
+  shuffleArray: function(array){
+    for(var i=0; i<array.length; i++){
+      var i1 = procengine.randomInt(array.length);
+      var i2 = procengine.randomInt(array.length);
+      if(Math.random() < 0.5){
+        var temp = array[i1];
+        array[i1] = array[i2];
+        array[i2] = temp;
+      }
+    }
+  },
+  /**
+   * get the biggest label in the map
+   * @param labeledPoints {Point[][]} the labeledPoints on the map
+   * @returns {Number} the label of the largest area
+   */
   getBiggestLabel(labeledPoints){
     var result = -1;
     var maxLength = 0;
@@ -258,12 +352,12 @@ var procengine = {
     return result;
   },
   /**
-  * Check if the x and y are in the array
-  * @param x {Number} the x position to Check
-  * @param y {Number} the y position to Check
-  * @param array {Point[]} the array to Check
-  * @return {boolean} if the point exisits in the array
-  */
+   * Check if the x and y are in the array
+   * @param x {Number} the x position to Check
+   * @param y {Number} the y position to Check
+   * @param array {Point[]} the array to Check
+   * @returns {boolean} if the point exisits in the array
+   */
   pointInArray: function(x, y, array){
     for (var i = 0; i < array.length; i++) {
       if(x == array[i].x && y == array[i].y){
@@ -273,20 +367,20 @@ var procengine = {
     return false;
   },
   /**
-  * append the second array to the first array
-  * @param array1 {Obejct[]} first array
-  * @param array2 {Object[]} second array
-  */
+   * append the second array to the first array
+   * @param array1 {Obejct[]} first array
+   * @param array2 {Object[]} second array
+   */
   appendArray(array1, array2){
     for (var i = 0; i < array2.length; i++) {
       array1.push(array2[i]);
     }
   },
   /**
-  * Get the total sum of probability attribute in the rules array
-  * @param rules {ReplacingRule[]} an array of ReplacingRule
-  * @return {Number} total sum of probabilities of the replacing rules
-  */
+   * Get the total sum of probability attribute in the rules array
+   * @param rules {ReplacingRule[]} an array of ReplacingRule
+   * @returns {Number} total sum of probabilities of the replacing rules
+   */
   getTotalProbability: function(rules){
     var totalValue = 0;
     for (var i = 0; i < rules.length; i++) {
@@ -295,20 +389,20 @@ var procengine = {
     return totalValue;
   },
   /**
-  * Changing the values to probabilities
-  * @param rules {ReplacingRule[]} an array of ReplacingRule
-  * @param totalValue {Number} the total summation of probabilities in the rules
-  */
+   * Changing the values to probabilities
+   * @param rules {ReplacingRule[]} an array of ReplacingRule
+   * @param totalValue {Number} the total summation of probabilities in the rules
+   */
   fixRulesProbability: function(rules, totalValue){
     for (var i = 0; i < rules.length; i++) {
       rules[i].probability /= totalValue;
     }
   },
   /**
-  * parse neighbourhood data into 2D matrix
-  * @param dataLine {string} a comma separated string for each row in the matrix
-  * @return {Number[][]} 2D matrix of 1s and 0s which define the neighbourhood
-  */
+   * parse neighbourhood data into 2D matrix
+   * @param dataLine {string} a comma separated string for each row in the matrix
+   * @returns {Number[][]} 2D matrix of 1s and 0s which define the neighbourhood
+   */
   parseNeighbourhood: function(dataLine){
     var pieces = dataLine.split(",");
     var result = [];
@@ -323,13 +417,13 @@ var procengine = {
     return result;
   },
   /**
-  * Flood fill the map starting from the point x, y
-  * @param map {Number[][]} the current labeled map
-  * @param x {Number} the current x position to flood
-  * @param y {Number} the current y position to floodFill
-  * @param connection {Number[][]} connection type
-  * @param currentLabel {Number} the current label
-  */
+   * Flood fill the map starting from the point x, y
+   * @param map {Number[][]} the current labeled map
+   * @param x {Number} the current x position to flood
+   * @param y {Number} the current y position to floodFill
+   * @param connection {Number[][]} connection type
+   * @param currentLabel {Number} the current label
+   */
   floodFill: function(map, x, y, connection, currentLabel){
     if(x < 0 || y < 0 || x >= map[0].length || y >= map.length || map[y][x] != 0){
       return;
@@ -347,12 +441,12 @@ var procengine = {
     }
   },
   /**
-  * label the map and get the results
-  * @param map {Number[][]} the current map
-  * @param connection {Number[][]} direction of connection for tiles
-  * @param mapStart (Number) the inpassable tile
-  * @return {Point[][]} a 2D array contains all the points with labels
-  */
+   * label the map and get the results
+   * @param map {Number[][]} the current map
+   * @param connection {Number[][]} direction of connection for tiles
+   * @param mapStart (Number) the inpassable tile
+   * @returns {Point[][]} a 2D array contains all the points with labels
+   */
   labelMap: function(map, rect, connection, mapStart){
     var tempMap = [];
     for (var y = 0; y < rect.height; y++) {
@@ -391,9 +485,9 @@ var procengine = {
     return result;
   },
   /**
-  * debugging printing function
-  * @param map {Number[][]} the current map
-  */
+   * debugging printing function
+   * @param map {Number[][]} the current map
+   */
   printDebugMap: function(map){
     if(!procengine.testing.isDebug){
       return;
@@ -414,9 +508,9 @@ var procengine = {
     console.log(result);
   },
   /**
-  * generate the starting map
-  * @return {Number[][]} 2D array of mapStart tile index
-  */
+   * generate the starting map
+   * @returns {Number[][]} 2D array of mapStart tile index
+   */
   getStartingMap: function(){
     var map = [];
     for (var y = 0; y < procengine.mapData.mapSize[1]; y++) {
@@ -520,19 +614,19 @@ var procengine = {
     return procengine.randomInt(rooms.length);
   },
   /**
-  * Dig the map to construct rooms where cellular automata can be applied
-  * @param map {Number[][]} the current map to be modified
-  * @return {Rectangle[]} array of all the rooms to be adjusted
-  */
+   * Dig the map to construct rooms where cellular automata can be applied
+   * @param map {Number[][]} the current map to be modified
+   * @returns {Rectangle[]} array of all the rooms to be adjusted
+   */
   getRooms: function(map){
     var rooms = [new procengine.Rectangle(1, 1, procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2)]
-    if(procengine.diggerInfo.diggingType == procengine.DiggingType["equal"]){
-      rooms = procengine.getEqualRooms(map, procengine.diggerInfo.diggingData[0], 
-        procengine.diggerInfo.diggingData[1], procengine.diggerInfo.roomNumber);
+    if(procengine.roomData.roomType == procengine.RoomType["equal"]){
+      rooms = procengine.getEqualRooms(map, procengine.roomData.roomParameter[0], 
+        procengine.roomData.roomParameter[1], procengine.roomData.roomNumber);
     }
-    else if(procengine.diggerInfo.diggingType == procengine.DiggingType["tree"]){
-      rooms = procengine.getTreeRooms(map, procengine.diggerInfo.diggingData[0], 
-        procengine.diggerInfo.diggingData[1], procengine.diggerInfo.roomNumber);
+    else if(procengine.roomData.roomType == procengine.RoomType["tree"]){
+      rooms = procengine.getTreeRooms(map, procengine.roomData.roomParameter[0], 
+        procengine.roomData.roomParameter[1], procengine.diggerInfo.roomNumber);
     }
 
     return rooms;
@@ -543,10 +637,9 @@ var procengine = {
    * @param rect {Rectangle} the current selected room
    * @param fixType {Unconnected} how to handle unconnected areas
    */
-  fixUnconnected: function(map, rect, fixType){
-    var labeledData = procengine.labelMap(map, rect, procengine.handlingUnconnected.connectionType,
-      procengine.mapData.mapStart);
-    if(fixType == procengine.Unconnected["delete"]){
+  fixUnconnected: function(map, rect, fixType, neighbourhood, thickness){
+    var labeledData = procengine.labelMap(map, rect, neighbourhood, procengine.mapData.mapStart);
+    if(fixType == procengine.ConnectionType["delete"]){
       var largestLabel = procengine.getBiggestLabel(labeledData);
       for (var i = 0; i < labeledData.length; i++) {
         if(i == largestLabel){
@@ -558,7 +651,7 @@ var procengine = {
         }
       }
     }
-    if(fixType == procengine.Unconnected["connect"]){
+    if(fixType == procengine.ConnectionType["connect"]){
       while(labeledData.length > 1){
         var i1 = procengine.randomInt(labeledData.length);
         var i2 = (i1 + procengine.randomInt(labeledData.length - 1) + 1) % labeledData.length;
@@ -579,31 +672,31 @@ var procengine = {
         if(Math.random() < 0.5){
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             procengine.sign(p2.x - p1.x), 0), procengine.mapData.mapStart,
-            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
+            procengine.mapData.mapDig, thickness);
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             0, procengine.sign(p2.y - p1.y)), procengine.mapData.mapStart,
-            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
+            procengine.mapData.mapDig, thickness);
         }
         else{
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             0, procengine.sign(p2.y - p1.y)), procengine.mapData.mapStart,
-            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
+            procengine.mapData.mapDig, thickness);
           procengine.connectPoints(map, p1, p2, new procengine.Point(
             procengine.sign(p2.x - p1.x), 0), procengine.mapData.mapStart,
-            procengine.mapData.mapDig, procengine.handlingUnconnected.connectionThickness);
+            procengine.mapData.mapDig, thickness);
         }
       }
     }
   },
   /**
-  * connect the map between p1 and p2
-  * @param p1 {Point} the first position
-  * @param p2 {Point} the second position
-  * @param dir {Point} the direction of connection
-  * @param mapStart {Number} impassable tile
-  * @param mapDig {Number} passable tile
-  * @param thickness (Number) the thickness of the connection
-  */
+   * connect the map between p1 and p2
+   * @param p1 {Point} the first position
+   * @param p2 {Point} the second position
+   * @param dir {Point} the direction of connection
+   * @param mapStart {Number} impassable tile
+   * @param mapDig {Number} passable tile
+   * @param thickness (Number) the thickness of the connection
+   */
   connectPoints: function(map, p1, p2, dir, mapStart, mapDig, thickness){
     var startThickness = Math.floor((thickness - 1) / 2);
     if(dir.x != 0){
@@ -640,24 +733,17 @@ var procengine = {
     }
   },
   /**
-  * Apply cellular automata to couple of rectangles
-  * @param map {Number[][]} the map need to be modified
-  * @param simNumber {Number} number of simulations
-  * @param rects {Rectangle[]} an array of rooms
-  * @param startingRules {ReplacingRule[]} the intializing rules for the
-  *                     cellular automata
-  * @param rules {Rule[]} the cellular automata rules
-  */
-  applyCellularAutomata: function(map, simNumber, rects, startingRules, rules){
+   * Apply cellular automata to couple of rectangles
+   * @param map {Number[][]} the map need to be modified
+   * @param simNumber {Number} number of simulations
+   * @param rects {Rectangle[]} an array of rooms
+   * @param startingRules {ReplacingRule[]} the intializing rules for the
+   *                     cellular automata
+   * @param rules {Rule[]} the cellular automata rules
+   */
+  applyCellularAutomata: function(map, simNumber, rects, rules){
     for (var i = 0; i < rects.length; i++) {
       var rect = rects[i];
-      if(startingRules.length > 0){
-        procengine.roomInitialize(map, rect, startingRules);
-        if(procengine.testing.isDebug){
-          console.log("Initializing room " + i.toString() + ":\n");
-          procengine.printDebugMap(map);
-        }
-      }
       for (var s = 0; s < simNumber; s++) {
         procengine.roomSimulate(map, rect, rules);
         if(procengine.testing.isDebug){
@@ -668,11 +754,53 @@ var procengine = {
     }
   },
   /**
-  * initialize the room based on the starting rules
-  * @param map {Number[][]} the current map to be modified
-  * @param rect {Rectangle} the current room dimension
-  * @param rules {ReplacingRule[]} an array of ReplacingRule to be applied
-  */
+   * Apply Generation Rule on the map
+   * @param map {Number[][]} the map to be modified
+   * @param rooms {Rectangle[]} the current rooms geenrated from the division algorithm
+   * @param generationRule {GenerationRule} the current generation rule to be applied
+   */
+  applyGenerationRule: function(map, rooms, generationRule){
+    var rects = [];
+    if(generationRule.generationType == procengine.GenerationType["map"]){
+      rects = [new procengine.Rectangle(0, 0, map[0].length, map.length)];
+      if(generationRule.generationParameter[0] != -1){
+        rects = [new procengine.Rectangle(generationRule.generationParameter[0], 
+          generationRule.generationParameter[1], generationRule.generationParameter[2], 
+          generationRule.generationParameter[3])];
+      }
+    }
+    else if(generationRule.generationType == procengine.GenerationType["room"]){
+      var rects = rooms;
+      if(generationRule.generationParameter[0] != -1){
+        rects = [];
+        for(var i=0; i<generationRule.generationParameter.length; i++){
+          rects.push(rooms[i]);
+        }
+      }
+    }
+
+    this.applyCellularAutomata(map, generationRule.simulationNumber, rects, generationRule.rules);
+    if(procengine.testing.isDebug){
+      console.log("After applying cellular automata:\n");
+      procengine.printDebugMap(map);
+    }
+
+    for(var i=0; i<rects.length; i++){
+      procengine.fixUnconnected(map, rects[i], 
+        generationRule.unconnectedRule.connectionType, generationRule.unconnectedRule.connectionCheck,
+        generationRule.unconnectedRule.connectionThickness);
+      if(procengine.testing.isDebug){
+        console.log("After using connection Method on Room " + i.toString() + ":\n");
+        procengine.printDebugMap(map);
+      }
+    }
+  },
+  /**
+   * initialize the room based on the starting rules
+   * @param map {Number[][]} the current map to be modified
+   * @param rect {Rectangle} the current room dimension
+   * @param rules {ReplacingRule[]} an array of ReplacingRule to be applied
+   */
   roomInitialize: function(map, rect, rules){
     for (var y = rect.y; y < rect.y + rect.height; y++) {
       for (var x = rect.x; x < rect.x + rect.width; x++) {
@@ -681,11 +809,11 @@ var procengine = {
     }
   },
   /**
-  * Apply one simulation run on a certain area
-  * @param map {Number[][]} the current map
-  * @param rect {Rectangle} the specific area need to be altered
-  * @param rules {Rule[]} the rules of the cellular automata
-  */
+   * Apply one simulation run on a certain area
+   * @param map {Number[][]} the current map
+   * @param rect {Rectangle} the specific area need to be altered
+   * @param rules {Rule[]} the rules of the cellular automata
+   */
   roomSimulate: function(map, rect, rules){
     var tempMap = [];
     for (var i = 0; i < map.length; i++) {
@@ -698,7 +826,7 @@ var procengine = {
     for (var y = rect.y; y < rect.y + rect.height; y++) {
       for (var x = rect.x; x < rect.x + rect.width; x++) {
         for (var i = 0; i < rules.length; i++) {
-          if(procengine.checkRule(map, x, y, rules[i])){
+          if(map[y][x] == rules[i].tile && procengine.checkRule(map, x, y, rules[i])){
             procengine.applyRule(tempMap, x, y, rules[i].replacingRules);
           }
         }
@@ -712,17 +840,48 @@ var procengine = {
     }
   },
   /**
-  * check if the rule can be applied on this tile
-  * @param map {Number[][]} the current map
-  * @param x {Number} the current x location
-  * @param y {Number} the current y location
-  * @param rule {Rule} the current rule to check
-  * @return true it can be applied and false otherwise
-  */
+   * Check if a condition is true or false
+   * @param value {Number} the current value to be compared
+   * @param conditionRule {ConditionRule} the condition to check
+   * @returns {boolean} true if the condition is true and false otherwise
+   */
+  checkCondition: function(value, conditionRule){
+    if(conditionRule.condition == procengine.Condition[">"]){
+      return value > conditionRule.value;
+    }
+    else if(conditionRule.condition == procengine.Condition["<"]){
+      return value < conditionRule.value;
+    }
+    else if(conditionRule.condition == procengine.Condition[">="]){
+      return value >= conditionRule.value;
+    }
+    else if(conditionRule.condition == procengine.Condition["<="]){
+      return value <= conditionRule.value;
+    }
+    else if(conditionRule.condition == procengine.Condition["=="]){
+      return value == conditionRule.value;
+    }
+    else if(conditionRule.condition == procengine.Condition["!="]){
+      return value != conditionRule.value;
+    }
+    return false;
+  },
+  /**
+   * check if the rule can be applied on this tile
+   * @param map {Number[][]} the current map
+   * @param x {Number} the current x location
+   * @param y {Number} the current y location
+   * @param rule {Rule} the current rule to check
+   * @returns {boolean} true it can be applied and false otherwise
+   */
   checkRule: function(map, x, y, rule){
     var centerY = Math.floor(rule.neighbourhood.length / 2);
     var centerX = Math.floor(rule.neighbourhood[0].length / 2);
-    var value = 0;
+    var values = [];
+    for(var i=0; i<rule.conditions.length; i++){
+      values.push(0);
+    }
+
     for (var iy = 0; iy < rule.neighbourhood.length; iy++) {
       for (var ix = 0; ix < rule.neighbourhood[iy].length; ix++) {
         var tempY = y - centerY + iy;
@@ -730,44 +889,61 @@ var procengine = {
         if(tempY >= map.length || tempY < 0 || tempX >= map[iy].length || tempX < 0){
           continue;
         }
-        if(rule.neighbourhood[iy][ix] != 0 &&
-          map[tempY][tempX] == rule.checkTile){
-          value += 1;
+        for(var i=0; i<rule.conditions.length; i++){
+          if(rule.neighbourhood[iy][ix] != 0 &&
+            map[tempY][tempX] == rule.conditions[i].tile){
+            values[i] += 1;
+          }
         }
       }
     }
-
-    if(rule.conditionType == procengine.ConditionType["in"]){
-      return value > rule.lowBoundary && value < rule.highBoundary;
+    
+    if(rule.conditionType == procengine.ConditionType["and"]){
+      for(var i=0; i<rule.conditions.length; i++){
+        if(!procengine.checkCondition(values[i], rule.conditions[i])){
+          return false;
+        }
+      }
+      return true;
     }
-    if(rule.conditionType == procengine.ConditionType["out"]){
-      return value < rule.lowBoundary || value > rule.highBoundary;
+    if(rule.conditionType == procengine.ConditionType["or"]){
+      for(var i=0; i<rule.conditions.length; i++){
+        if(procengine.checkCondition(values[i], rule.conditions[i])){
+          return true;
+        }
+      }
+      return false;
     }
     return false;
   },
   /**
-  * Apply a group of replacing rules on a certain tile
-  * @param map {Number[][]} the current map
-  * @param x {Number} the current x location
-  * @param y {Number} the current y location
-  * @param rules {ReplacingRule[]} the replacing rules to be applied
-  */
+   * Apply a group of replacing rules on a certain tile
+   * @param map {Number[][]} the current map
+   * @param x {Number} the current x location
+   * @param y {Number} the current y location
+   * @param rules {ReplacingRule[]} the replacing rules to be applied
+   */
   applyRule: function(map, x, y, rules){
     var randomValue = Math.random();
     var amountValue = 0;
     for (var i = 0; i < rules.length; i++) {
       amountValue += rules[i].probability;
       if(randomValue < amountValue){
-        map[y][x] = rules[i].tile;
+        if(procengine.identifiedNames.maxCounts[rules[i].tile] == -1 ||
+          procengine.testing.currentCounts[rules[i].tile] < 
+          procengine.identifiedNames.maxCounts[rules[i].tile]){
+            map[y][x] = rules[i].tile;
+            procengine.testing.currentCounts[rules[i].tile] += 1;
+          }
         break;
       }
     }
   },
   /**
-  * Get generated map that use maps
-  * @param map {Number[][]} the current generated map
-  * @param {string[][]} map using the names defined
-  */
+   * Get generated map that use maps
+   * @param map {Number[][]} the current generated map
+   * @param {string[][]} map using the names defined
+   */
   getNamesMap: function(map){
     var tempMap = [];
     for (var i = 0; i < map.length; i++) {
@@ -780,64 +956,44 @@ var procengine = {
   },
   //////////////////////////Public Functions////////////////////////////////////
   /**
-  * initialize the whole framework with new data
-  * @param data {Object} have the following fields "mapData", "names",
-  *                      "neigbourhoods", "startingRules", "roomRules",
-  *                      "smoothRules"
-  */
+   * initialize the whole framework with new data
+   * @param data {Object} have the following fields
+   *                      {
+   *                        "mapData": ["widthxheight", "mapStart:mapDig"],
+   *                        "roomData": ["roomType:parameters:numRooms", "StartingRule|StartingRule|..."],
+   *                        "names": ["Name:MaxCount", "Name:MaxCount", ...],
+   *                        "neighbourhoods": {"Name":"Neighboorhood", "Name":"Neighboorhood", ...},
+   *                        "generationRules": [GenerationRule, GenerationRule, ...]
+   *                      }
+   */
   initialize: function(data){
     procengine.mapData.mapSize = [];
     procengine.mapData.mapStart = 0;
     procengine.mapData.mapDig = 0;
-    procengine.diggerInfo.diggingType = procengine.DiggingType["equal"];
-    procengine.diggerInfo.diggingData = [];
-    procengine.diggerInfo.roomNumber = 1;
-    procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
-    procengine.handlingUnconnected.connectionType = [[]];
-    procengine.handlingUnconnected.connectionThickness = 1;
+    procengine.roomData.roomType = procengine.RoomType["equal"];
+    procengine.roomData.roomParameter = [];
+    procengine.roomData.roomNumber = 1;
+    procengine.roomData.startingRules = [];
     procengine.identifiedNames.namesIndex = {};
     procengine.identifiedNames.indexNames = {};
+    procengine.identifiedNames.maxCounts = {};
     procengine.identifiedNames.neigbourhoods = {};
-    procengine.roomAutomata = {
-      simulationNumber: 2,
-      startingRules: [],
-      rules: []
-    };
-    procengine.smoothAutomata = {
-      simulationNumber:0,
-      rules:[]
-    };
-
-    if(data.hasOwnProperty("mapData")){
-      var sizePieces = data["mapData"][0].toLowerCase().split("x");
-      procengine.mapData.mapSize.push(parseInt(sizePieces[0]));
-      procengine.mapData.mapSize.push(parseInt(sizePieces[1]));
-      var roomPieces = data["mapData"][1].split(":");
-      procengine.diggerInfo.diggingType = procengine.DiggingType[roomPieces[0].trim().toLowerCase()];
-      sizePieces = roomPieces[1].toLowerCase().split("x");
-      procengine.diggerInfo.diggingData.push(parseInt(sizePieces[0]));
-      procengine.diggerInfo.diggingData.push(parseInt(sizePieces[1]));
-      procengine.diggerInfo.roomNumber = parseInt(roomPieces[2]);
-    }
-    else{
-      procengine.mapData.mapSize.push(15);
-      procengine.mapData.mapSize.push(7);
-      procengine.diggerInfo.diggingType = procengine.DiggingType["equal"];
-      procengine.diggerInfo.diggingData.push(1);
-      procengine.diggerInfo.diggingData.push(1);
-      procengine.diggerInfo.roomNumber = 1;
-    }
+    procengine.generationRules = [];
 
     if(data.hasOwnProperty("names")){
       var index = 0;
       for(var i = 0; i < data["names"].length; i++) {
-        procengine.identifiedNames.namesIndex[data["names"][i].trim().toLowerCase()] = index;
-        procengine.identifiedNames.indexNames[index] = data["names"][i].trim().toLowerCase();
+        var pieces = data["names"][i].split(":");
+        procengine.identifiedNames.namesIndex[pieces[0].trim().toLowerCase()] = index;
+        procengine.identifiedNames.indexNames[index] = pieces[0].trim().toLowerCase();
+        procengine.identifiedNames.maxCounts[index] = parseInt(pieces[1].trim());
         index+=1;
       }
     }
     else{
       procengine.identifiedNames.namesIndex = {"solid":0, "empty":1};
+      procengine.identifiedNames.indexNames = {"0":"solid", "1":"empty"};
+      procengine.identifiedNames.maxCounts = {"0":"-1", "1":"-1"};
     }
 
     if(data.hasOwnProperty("neighbourhoods")){
@@ -854,63 +1010,66 @@ var procengine = {
     }
 
     if(data.hasOwnProperty("mapData")){
-      var intializePieces = data["mapData"][2].split(":");
-      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[intializePieces[0].toLowerCase()];
-      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[intializePieces[1].toLowerCase()];
-      var dataPieces = data["mapData"][3].split(":");
-      procengine.handlingUnconnected.unconnected = procengine.Unconnected[dataPieces[0].trim().toLowerCase()];
-      procengine.handlingUnconnected.connectionType = procengine.identifiedNames.
-        neigbourhoods[dataPieces[1].trim().toLowerCase()];
-      procengine.handlingUnconnected.connectionThickness = parseInt(dataPieces[2].trim());
+      var pieces = data["mapData"][0].toLowerCase().split("x");
+      procengine.mapData.mapSize.push(parseInt(pieces[0]));
+      procengine.mapData.mapSize.push(parseInt(pieces[1]));
+      pieces = data["mapData"][1].split(":");
+      procengine.mapData.mapStart = procengine.identifiedNames.namesIndex[pieces[0].toLowerCase()];
+      procengine.mapData.mapDig = procengine.identifiedNames.namesIndex[pieces[1].toLowerCase()];
     }
     else{
+      procengine.mapData.mapSize.push(15);
+      procengine.mapData.mapSize.push(7);
       procengine.mapData.mapStart = procengine.identifiedNames.namesIndex["solid"];
       procengine.mapData.mapDig = procengine.identifiedNames.namesIndex["empty"];
-      procengine.handlingUnconnected.unconnected = procengine.Unconnected["connect"];
-      procengine.handlingUnconnected.connectionType = [[0,1,0],[1,0,1],[0,1,0]];
-      procengine.handlingUnconnected.connectionThickness = 1;
     }
-
-    if(data.hasOwnProperty("startingRules")){
-      for(var i = 0; i < data["startingRules"].length; i++) {
-        procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule(data["startingRules"][i]));
+    procengine.identifiedNames.maxCounts[procengine.mapData.mapStart] = -1;
+    procengine.identifiedNames.maxCounts[procengine.mapData.mapDig] = -1;
+    
+    if(data.hasOwnProperty("roomData")){
+      var pieces = data["roomData"][0].trim().split(":");
+      procengine.roomData.roomType = procengine.RoomType[pieces[0].toLowerCase().trim()];
+      procengine.roomData.roomNumber = parseInt(pieces[2].trim());
+      pieces = pieces[1].toLowerCase().trim().split("x");
+      procengine.roomData.roomParameter.push(parseInt(pieces[0]));
+      procengine.roomData.roomParameter.push(parseInt(pieces[1]));
+      pieces = data["roomData"][1].trim().split("|");
+      for(var i = 0; i < pieces.length; i++){
+        procengine.roomData.startingRules.push(new procengine.ReplacingRule(pieces[i].trim()));
       }
     }
     else{
-      procengine.roomAutomata.startingRules.push(new procengine.ReplacingRule("empty,1"));
+      procengine.roomData.roomType = procengine.RoomType["equal"];
+      procengine.roomData.roomNumber = 1;
+      procengine.roomData.roomParameter = [1, 1];
+      procengine.roomData.startingRules.push(new procengine.ReplacingRule("empty,1"));
     }
-    procengine.fixRulesProbability(procengine.roomAutomata.startingRules,
-      procengine.getTotalProbability(procengine.roomAutomata.startingRules));
+    procengine.fixRulesProbability(procengine.roomData.startingRules,
+      procengine.getTotalProbability(procengine.roomData.startingRules));
 
-    if(data.hasOwnProperty("roomRules")){
-      procengine.roomAutomata.simulationNumber = parseInt(data["roomRules"][0]);
-      for(var i = 1; i < data["roomRules"].length; i++) {
-        procengine.roomAutomata.rules.push(new procengine.Rule(data["roomRules"][i]));
+    if(data.hasOwnProperty("generationRules")){
+      for(var i = 0; i < data["generationRules"].length; i++){
+        procengine.generationRules.push(new procengine.GenerationRule(data["generationRules"][i]));
       }
     }
     else{
-      procengine.roomAutomata.simulationNumber = 0;
-    }
-
-    if(data.hasOwnProperty("smoothRules")){
-      procengine.roomAutomata.simulationNumber = parseInt(data["smoothRules"][0]);
-      for(var i = 1; i < data["smoothRules"].length; i++) {
-        procengine.smoothAutomata.rules.push(new procengine.Rule(data["smoothRules"][i]));
-      }
-    }
-    else{
-      procengine.smoothAutomata.simulationNumber = 0;
+      procengine.generationRules = [];
     }
 
     procengine.testing.isInitialized = true;
   },
   /**
-  * generate a level based on the intialized data
-  * @return {String[][]} a 2d matrix of the defined names
-  */
-  generateLevel: function(){
+   * generate a level based on the intialized data
+   * @returns {String[][]} a 2d matrix of the defined names
+   */
+  generateMap: function(){
     if(!procengine.testing.isInitialized){
       console.log("you must call initialize first");
+    }
+
+    procengine.testing.currentCounts = {};
+    for(var index in procengine.identifiedNames.indexNames){
+      procengine.testing.currentCounts[index] = 0;
     }
 
     var map = procengine.getStartingMap();
@@ -919,74 +1078,58 @@ var procengine = {
       procengine.printDebugMap(map);
       console.log("Room Automata:\n")
     }
+
     var rooms = procengine.getRooms(map);
-    procengine.applyCellularAutomata(map,
-      procengine.roomAutomata.simulationNumber, rooms,
-        procengine.roomAutomata.startingRules, procengine.roomAutomata.rules);
-    
+    procengine.shuffleArray(rooms);
+
     for(var i=0; i<rooms.length; i++){
-      procengine.fixUnconnected(map, rooms[i], procengine.handlingUnconnected.unconnected);
+      procengine.roomInitialize(map, rooms[i], procengine.roomData.startingRules);
       if(procengine.testing.isDebug){
-        console.log("After using connection Method on Room " + i.toString() + ":\n");
+        console.log("Initializing room " + i.toString() + ":\n");
         procengine.printDebugMap(map);
       }
     }
 
-    procengine.fixUnconnected(map, new procengine.Rectangle(1, 1, 
-      procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2), 
-      procengine.Unconnected["connect"]);
-    if(procengine.testing.isDebug){
-      console.log("Connecting rooms:\n");
-      procengine.printDebugMap(map);
-    }
-    
-    procengine.applyCellularAutomata(map,
-      procengine.smoothAutomata.simulationNumber,
-      [new procengine.Rectangle(0, 0, procengine.mapData.mapSize[0],
-        procengine.mapData.mapSize[1])], [], procengine.smoothAutomata.rules);
-    if(procengine.smoothAutomata.simulationNumber > 0){
-        procengine.fixUnconnected(map, new procengine.Rectangle(1, 1, 
-          procengine.mapData.mapSize[0] - 2, procengine.mapData.mapSize[1] - 2), 
-          procengine.Unconnected["connect"]);
-    }
-    if(procengine.testing.isDebug && procengine.smoothAutomata.simulationNumber > 0){
-        console.log("Smooth Automata:\n");
-        procengine.printDebugMap(map);
+    for(var i=0; i<procengine.generationRules.length; i++){
+      procengine.applyGenerationRule(map, rooms, procengine.generationRules[i]);
     }
 
     return procengine.getNamesMap(map);
   },
   /**
-  * get string contains all the data about the generator
-  * @return {String} display all the information stored in the engine
-  */
+   * get string contains all the data about the generator
+   * @returns {String} display all the information stored in the engine
+   */
   toString: function(){
     return "mapSize: " + procengine.mapData.mapSize[0].toString() + "x" +
-                         procengine.mapData.mapSize[1].toString() + "\n" +
-      "roomNumber: " + procengine.diggerInfo.roomNumber.toString() + "\n" +
-      "diggingType: " + procengine.diggerInfo.diggingType.toString + "\n" +
-      "diggingData: " + procengine.diggerInfo.diggingData[0].toString() + "x" +
-                        procengine.diggerInfo.diggingData[1].toString() + "x" +
-      "Unconnected: " + procengine.handlingUnconnected.unconnected + "\n" +
-      "mapStart: " + procengine.identifiedNames.indexNames[procengine.mapData.mapStart] + " mapDig: " +
-                     procengine.identifiedNames.indexNames[procengine.mapData.mapDig] + "\n" +
+                         procengine.mapData.mapSize[1].toString() + " " +
+      "mapStart: " + procengine.identifiedNames.indexNames[procengine.mapData.mapStart] + " " +
+      "mapDig: " + procengine.identifiedNames.indexNames[procengine.mapData.mapDig] + "\n" +
+      "roomNumber: " + procengine.roomData.roomNumber.toString() + " " +
+      "roomType: " + procengine.roomData.roomType + " " +
+      "roomParameters: " + procengine.roomData.roomParameter[0].toString() + "x" +
+                        procengine.roomData.roomParameter[1].toString() + "\n" +
+      "startingRules: [" + procengine.roomData.startingRules.toString() + "]\n" +
       "names: " + procengine.identifiedNames.indexNames.toString() + "\n" +
-      "roomAutomata:\n" +
-      "\tsimulationNumber: " + procengine.roomAutomata.simulationNumber.toString() + "\n" +
-      "\tstartingRules: [" + procengine.roomAutomata.startingRules.toString() + "]\n" +
-      "\trules: [" + procengine.roomAutomata.rules.toString() + "]\n" +
-      "smoothAutomata:\n" +
-      "\tsimulationNumber: " + procengine.smoothAutomata.simulationNumber.toString() + "\n" +
-      "\trules: [" + procengine.smoothAutomata.rules.toString() + "]\n";
+      "maxCounts: " + procengine.identifiedNames.maxCounts.toString() + "\n" +
+      "generationRules:\n" +
+          procengine.generationRules.toString() + "\n";
   }
 };
 ///////////////////////////////Testing Code/////////////////////////////////////
 // var data = {
-//   "mapData": ["24x8", "equal:2x2:4", "solid:empty", "connect:plus:1"],
-//   "names": ["empty", "solid"],
+//   "mapData": ["24x8", "solid:empty"],
+//   "roomData": ["equal:2x2:4", "solid:1|empty:2"],
+//   "names": ["empty:-1", "solid:-1", "goal:1"],
 //   "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
-//   "startingRules": ["solid:1","empty:2"],
-//   "roomRules": ["2", "empty,all,solid,out,0,5,solid:1"]
+//   "generationRules": [
+//     {"genData": ["2", "room:-1", "connect:plus:1"], 
+//       "rules": ["empty,all,or,solid>5,solid:1"]},
+//     {"genData": ["1", "room:2", "connect:plus:1"],
+//      "rules": ["empty,all,or,empty>4,empty:4|goal:1"]}
+//     {"genData": ["0", "map:-1", "connect:plus:1"], 
+//       "rules": []}
+//   ]
 // };
 // procengine.initialize(data);
-// procengine.generateLevel();
+// procengine.generateMap();
