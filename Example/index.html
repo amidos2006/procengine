@@ -53,7 +53,7 @@
                 position: absolute;
                 left: 0%;
                 top: 45px;
-                width:70%;
+                width:60%;
                 height:92%;
                 margin-left:5px;
                 padding-right:5px;
@@ -66,9 +66,9 @@
             
             .rightPanel{
                 position: absolute;
-                left:70%;
+                left:60%;
                 top:45px;
-                width:28%;
+                width:38%;
                 margin-left:15px;
                 height:92%;
                 overflow-y: hidden;
@@ -90,15 +90,27 @@
             <div id="replacingRulePattern" class="replacingRule">
                 <label>Name: </label><Input type="textbox" value="empty"/><label> Count: </label><Input type="textbox" value="1"/><button onclick="deleteNode(this)">(x)</button>
             </div>
-            <div id="definedNamePattern" class="definedName"><Input type="textbox" value="newTile"/><button onclick="deleteNode(this)">(x)</button></div>
+            <div id="conditionPattern">
+                <label>Check Tile: </label><Input type="textbox" value="solid"/><label> Condition: </label><select><option value=">">greater than</option><option value="<">less than</option><option value="<=">less than or equal</option><option value=">=">greater than or equal</option><option value="==">equal</option><option value="!=">not equal</option></select><label> Value: </label><Input type="textbox" value="5"/><button onclick="deleteNode(this)">(x)</button>
+            </div>
+            <div id="definedNamePattern" class="definedName"><label id="mapIndex"></label><label> Name: </label><Input type="textbox" value="newTile"/><label> Count: </label><Input type="textbox" value="-1"/><button onclick="deleteNode(this)">(x)</button></div>
             <div id="definedNeighbourPattern" class="definedNeighbour"><label>Name: </label><Input type="textbox" value="newNeighbour"/><label> Value: </label><Input type="textbox" value="010,101,010"/><button onclick="deleteNode(this)">(x)</button></div>
-            <div id="cellularAutomataPattern" class="cellularAutomata">
+            <div id="ruleAutomataPattern" class="cellularAutomata">
                 <label>Tile: </label><Input type="textbox" value="empty"/>
                 <label> Neighboorhood: </label><Input type="textbox" value="plus"/>
-                <label> Check: </label><Input type="textbox" value="solid"/>
-                <label> Condition:</label> <select><option value="out">Out</option><option value="in">In</option></select><label> lowBound: </label><Input type="textbox" value="0"/><label> highBound: </label><Input type="textbox" value="5"/>
+                <label> Condition Type: </label><select><option value="or">Or</option><option value="and">And</option></select>
                 <button onclick="deleteNode(this)">(x)</button>
-                <div><br/><b>Replacing Rules:</b></div>
+                <br/>
+                <br/>
+                <b>Conditions:</b>
+                <div class="row">
+                    <ul>
+                        <li><div><label>Check Tile: </label><Input type="textbox" value="solid"/><label> Condition: </label><select><option value=">">greater than</option><option value="<">less than</option><option value="<=">less than or equal</option><option value=">=">greater than or equal</option><option value="==">equal</option><option value="!=">not equal</option></select><label> Value: </label><Input type="textbox" value="5"/></div></li>
+                    </ul>
+                    <button class="generateButton" onclick="addNodeToSectionNode(this,'conditionPattern')">(+) Condition</button>
+                </div>
+                <br/>
+                <b>Replacing Rules:</b>
                 <div class="row">
                     <ul>
                         <li><div><label>Name: </label><Input type="textbox" value="solid"/><label> Count: </label><Input type="textbox" value="1"/></div></li>
@@ -107,24 +119,37 @@
                  </div>
                  <hr/>
              </div>
+             <div id="cellularAutomataPattern">
+                <h4>Cellular Automata:</h4>
+                <ul>
+                    <li><label>SimNumber: </label><Input type="textbox" value="0"/></li>
+                    <li><label>Generation Type: </label><select><option value="map">Map</option><option value="room">Room</option></select><label> Generation Parameters: </label><Input type="textbox" value="-1"/></li>
+                    <li><label>Fix Type: </label><select><option value="connect">Connect</option><option value="delete">Delete</option></select><label> Neighboorhood: </label><Input type="textbox" value="plus"/><label> Thickness: </label><Input type="textbox" value="1"/></li>
+                </ul>
+                <button onclick="deleteNode(this)">(x)</button>
+                <h4>Automata Rules:</h4>
+                <ul class="roomRulesClass"></ul>
+                <button class="generateButton" onclick="addNodeToClassName(this.parentNode,'roomRulesClass','ruleAutomataPattern')">(+) Rule</button>
+                <hr/>
+            </div>
         </div>
         <h1>ProcEngine Interactive Tool</h1>
         <div class="leftPanel">
             <h4>Map Data:</h4>
             <ul id="mapDataSection">
                 <li><label>Map Size: </label><Input type="input" value="24"/><label> x </label><Input type="input" value="16"/></li>
-                <li><label>Room Division: </label><select><option value="equal">Equal</option><option value="tree">Tree</option></select><label> Parameters: </label><Input type="textbox" value="2"/><label> x </label><Input input="textbox" value="2"/><label> Number of rooms: </label><Input type="textbox" value="3"/></li>
+                <li><label>Initial: </label><Input type="textbox" value="solid"/><label> Dig: </label><Input type="textbox" value="empty"/></li>
             </ul>
             <hr/>
             <h4>Names:</h4>
             <div>
                 <ul id="namesSection">
-                    <li><div><Input class="definedName" type="textbox" value="empty"/></div></li>
-                    <li><div><Input class="definedName" type="textbox" value="solid"/></div></li>
+                    <li><div><label>0: </label><label> Name: </label><Input type="textbox" value="empty"/><label> Count: </label><Input type="textbox" value="-1"/></div></li>
+                    <li><div><label>1: </label><label> Name: </label><Input type="textbox" value="solid"/><label> Count: </label><Input type="textbox" value="-1"/></div></li>
                 </ul>
             </div>
 
-            <button class="generateButton" onclick="addNodeToSectionName('namesSection', 'definedNamePattern')">(+) Name</button>
+            <button class="generateButton" onclick="modifyTheLabel('namesSection', 'definedNamePattern')">(+) Name</button>
             <hr/>
             <h4>Neighbourhoods:</h4>
             <div>
@@ -138,37 +163,35 @@
             <h4>Room Data:</h4>
             <div>
                 <ul id="roomDataSection">
-                    <li><label>Initial: </label><Input type="textbox" value="solid"/><label> Dig: </label><Input type="textbox" value="empty"/></li>
-                    <li><label>Fix Type: </label><select><option value="connect">Connect</option><option value="delete">Delete</option></select><label> Neighboorhood: </label><Input type="textbox" value="plus"/><label> Thickness: </label><Input type="textbox" value="1"/></li>
+                    <li><label>Room Division: </label><select><option value="equal">Equal</option><option value="tree">Tree</option></select><label> Parameters: </label><Input type="textbox" value="2"/><label> x </label><Input input="textbox" value="2"/><label> Number of rooms: </label><Input type="textbox" value="3"/></li>
                 </ul>
-            </div>
-            <hr/>
-            <h4>Starting Rules:</h4>
-            <div>
+                <h4>Starting Rules:</h4>
                 <ul id="startingRulesSection">
                     <li><div><label>Name: </label><Input type="textbox" value="empty"/><label> Count: </label><Input type="textbox" value="1"/></div></li>
                 </ul>
+                <button class="generateButton" onclick="addNodeToSectionName('startingRulesSection', 'replacingRulePattern')">(+) Rule</button>
             </div>
-            
-            <button class="generateButton" onclick="addNodeToSectionName('startingRulesSection', 'replacingRulePattern')">(+) Rule</button>
             <hr/>
-            <h4>Room Rules:</h4>
-            <div>
-                <label>SimNumber: </label><Input id="roomSim" type="textbox" value="0"/>
-                <hr/>
-                <ul id="roomRulesSection"></ul>
-            </div>
-            
-            <button class="generateButton" onclick="addNodeToSectionName('roomRulesSection','cellularAutomataPattern')">(+) Rule</button>
+            <h4>Generation Rules:</h4>
             <hr/>
-            <h4>Smooth Rules:</h4>
-            <div>
-                <label>SimNumber: </label><Input id="smoothSim" type="textbox" value="0"/>
-                <hr/>
-                <ul id="smoothRulesSection"></ul>
-            </div>
+            <ul id="generationRulesSection">
+                <li>
+                    <div>
+                        <h4>Cellular Automata:</h4>
+                        <ul>
+                            <li><label>SimNumber: </label><Input type="textbox" value="0"/></li>
+                            <li><label>Generation Type: </label><select><option value="map">Map</option><option value="room">Room</option></select><label> Generation Parameters: </label><Input type="textbox" value="-1"/></li>
+                            <li><label>Fix Type: </label><select><option value="connect">Connect</option><option value="delete">Delete</option></select><label> Neighboorhood: </label><Input type="textbox" value="plus"/><label> Thickness: </label><Input type="textbox" value="1"/></li>
+                        </ul>
+                        <h4>Automata Rules:</h4>
+                        <ul class="roomRulesClass"></ul>
+                        <button class="generateButton" onclick="addNodeToClassName(this.parentNode,'roomRulesClass','ruleAutomataPattern')">(+) Rule</button>
+                        <hr/>
+                    </div>
+                </li>
+            </ul>
             
-            <button class="generateButton" onclick="addNodeToSectionName('smoothRulesSection','cellularAutomataPattern')">(+) Rule</button>
+            <button class="generateButton" onclick="addNodeToSectionName('generationRulesSection','cellularAutomataPattern')">(+) Cellular Automata</button>
             <hr/>
             <button onclick="generateData()" class="generateButton">Generate</button>
         </div>
@@ -188,6 +211,28 @@
             node.appendChild(textBox.cloneNode(true));
             var addedSection = document.getElementById(sectionName);
             addedSection.appendChild(node);
+            return node;
+        }
+
+        function modifyTheLabel(sectionName, cloneName){
+            var node = addNodeToSectionName(sectionName, cloneName);
+            var addedSection = document.getElementById(sectionName);
+            var startingIndex = "0";
+            var shift = 1;
+            if(addedSection.children.length - 1 >= 10){
+                startingIndex = "a";
+                shift = 11;
+            }
+            node.getElementsByTagName("label")[0].innerText = String.fromCharCode(startingIndex.charCodeAt(0) + addedSection.children.length - shift) + ": ";
+        }
+
+        function addNodeToClassName(element, className, cloneName){
+            var node = document.createElement("li");
+            var textBox = document.getElementById(cloneName);
+            node.appendChild(textBox.cloneNode(true));
+            var addedSection = element.getElementsByClassName(className)[0];
+            addedSection.appendChild(node);
+            return node;
         }
 
         function addNodeToSectionNode(sectionNode, cloneName){
@@ -215,22 +260,29 @@
                 "mapData": [],
                 "names": [],
                 "neighbourhoods": {},
-                "startingRules": [],
-                "roomRules": [],
-                "smoothRules": []
+                "roomData": [],
+                "generationRules": []
             };
 
             var mapDataSection = document.getElementById("mapDataSection");
             var roomDataSection = document.getElementById("roomDataSection");
 
             data["mapData"].push(mapDataSection.children[0].children[1].value + "x" + mapDataSection.children[0].children[3].value);
-            data["mapData"].push(mapDataSection.children[1].children[1].value + ":" + mapDataSection.children[1].children[3].value + "x" + mapDataSection.children[1].children[5].value + ":" + mapDataSection.children[1].children[7].value);
-            data["mapData"].push(roomDataSection.children[0].children[1].value + ":" + roomDataSection.children[0].children[3].value);
-            data["mapData"].push(roomDataSection.children[1].children[1].value + ":" + roomDataSection.children[1].children[3].value + ":" + roomDataSection.children[1].children[5].value);
+            data["mapData"].push(mapDataSection.children[1].children[1].value + ":" + mapDataSection.children[1].children[3].value);
+            
+            data["roomData"].push(roomDataSection.children[0].children[1].value + ":" + roomDataSection.children[0].children[3].value + "x" + roomDataSection.children[0].children[5].value + ":" + roomDataSection.children[0].children[7].value);
+            var startingRulesSection = document.getElementById("startingRulesSection");
+            var startingRulesResult = "";
+            for(var i=0; i<startingRulesSection.children.length; i++){
+                startingRulesResult += startingRulesSection.children[i].children[0].children[1].value + ":" + startingRulesSection.children[i].children[0].children[3].value;
+                startingRulesResult += "|";
+            }
+            startingRulesResult = startingRulesResult.substring(0, startingRulesResult.length-1);
+            data["roomData"].push(startingRulesResult);
 
             var namesSection = document.getElementById("namesSection");
             for(var i=0; i<namesSection.children.length; i++){
-                data["names"].push(namesSection.children[i].children[0].children[0].value);
+                data["names"].push(namesSection.children[i].children[0].children[2].value + ":" + namesSection.children[i].children[0].children[4].value);
             }
 
             var neighbourhoodsSection = document.getElementById("neighbourhoodsSection");
@@ -238,44 +290,41 @@
                 data["neighbourhoods"][neighbourhoodsSection.children[i].children[0].children[1].value] = neighbourhoodsSection.children[i].children[0].children[3].value;
             }
 
-            var startingRulesSection = document.getElementById("startingRulesSection");
-            for(var i=0; i<startingRulesSection.children.length; i++){
-                data["startingRules"].push(startingRulesSection.children[i].children[0].children[1].value + ":" + startingRulesSection.children[i].children[0].children[3].value);
-            }
+            var generationRulesSection = document.getElementById("generationRulesSection");
+            for(var i=0; i<generationRulesSection.children.length; i++){
+                var result = {"genData":[], "rules": []}
+                result["genData"].push(generationRulesSection.children[i].children[0].children[1].children[0].children[1].value);
+                result["genData"].push(generationRulesSection.children[i].children[0].children[1].children[1].children[1].value + ":" + generationRulesSection.children[i].children[0].children[1].children[1].children[3].value);
+                result["genData"].push(generationRulesSection.children[i].children[0].children[1].children[2].children[1].value + ":" + generationRulesSection.children[i].children[0].children[1].children[2].children[3].value + ":" + generationRulesSection.children[i].children[0].children[1].children[2].children[5].value);
+                
+                var automataRules = generationRulesSection.children[i].children[0].children[4].children;
+                for(var j=0; j<automataRules.length; j++){
+                    var value = automataRules[j].children[0].children[1].value + "," + 
+                        automataRules[j].children[0].children[3].value + "," +
+                        automataRules[j].children[0].children[5].value;
+                    
+                    var conditionSection = automataRules[j].children[0].children[10].children[0].children;
+                    var tempValue = "";
+                    for(var k=0; k<conditionSection.length; k++){
+                        tempValue += conditionSection[k].children[0].children[1].value + 
+                            conditionSection[k].children[0].children[3].value + 
+                            conditionSection[k].children[0].children[5].value + "|";
+                    }
+                    tempValue = tempValue.substring(0, tempValue.length - 1);
+                    value += "," + tempValue;
 
-            var roomRulesSection = document.getElementById("roomRulesSection");
-            data["roomRules"].push(document.getElementById("roomSim").value);
-            for(var i=0; i<roomRulesSection.children.length; i++){
-                var value = roomRulesSection.children[i].children[0].children[1].value + ", " + 
-                    roomRulesSection.children[i].children[0].children[3].value + ", " + 
-                    roomRulesSection.children[i].children[0].children[5].value + ", " +
-                    roomRulesSection.children[i].children[0].children[7].value + ", " +
-                    roomRulesSection.children[i].children[0].children[9].value + ", " +
-                    roomRulesSection.children[i].children[0].children[11].value + ", ";
-                for(var k=0; k<roomRulesSection.children[i].children[0].children[14].children[0].children.length; k++){
-                    value += roomRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[1].value + ":" + roomRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[3].value + "|";
+                    var replacingSection = automataRules[j].children[0].children[13].children[0].children;
+                    var tempValue = "";
+                    for(var k=0; k<replacingSection.length; k++){
+                        tempValue += replacingSection[k].children[0].children[1].value + ":" +
+                            replacingSection[k].children[0].children[3].value + "|";
+                    }
+                    tempValue = tempValue.substring(0, tempValue.length - 1);
+                    value += "," + tempValue;
+
+                    result["rules"].push(value);
                 }
-                value = value.substring(0, value.length-1);
-
-                data["roomRules"].push(value);
-            }
-
-            var smoothRulesSection = document.getElementById("smoothRulesSection");
-            data["smoothRules"].push(document.getElementById("smoothSim").value);
-            for(var i=0; i<smoothRulesSection.children.length; i++){
-                var value = smoothRulesSection.children[i].children[0].children[1].value + ", " + 
-                    smoothRulesSection.children[i].children[0].children[3].value + ", " + 
-                    smoothRulesSection.children[i].children[0].children[5].value + ", " +
-                    smoothRulesSection.children[i].children[0].children[7].value + ", " +
-                    smoothRulesSection.children[i].children[0].children[9].value + ", " +
-                    smoothRulesSection.children[i].children[0].children[11].value + ", ";
-                for(var k=0; k<smoothRulesSection.children[i].children[0].children[14].children[0].children.length; k++){
-                    value += smoothRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[1].value + ":" + 
-                    smoothRulesSection.children[i].children[0].children[14].children[0].children[k].children[0].children[3].value + "|";
-                }
-                value = value.substring(0, value.length-1);
-
-                data["smoothRules"].push(value);
+                data["generationRules"].push(result);
             }
 
             return data;
@@ -288,6 +337,13 @@
             result += "\t\"mapData\":[";
             for(var i=0; i<data["mapData"].length; i++){
                 result += "\"" + data["mapData"][i] + "\", ";
+            }
+            result = result.substring(0, result.length - 2);
+            result += "],\n";
+
+            result += "\t\"roomData\":[";
+            for(var i=0; i<data["roomData"].length; i++){
+                result += "\"" + data["roomData"][i] + "\", ";
             }
             result = result.substring(0, result.length - 2);
             result += "],\n";
@@ -306,26 +362,31 @@
             result= result.substring(0, result.length - 2);
             result += "\n\t},\n";
 
-            result += "\t\"startingRules\":[";
-            for(var i=0; i<data["startingRules"].length; i++){
-                result += "\"" + data["startingRules"][i] + "\", ";
-            }
-            result= result.substring(0, result.length - 2);
-            result += "],\n";
+            result += "\t\"generationRules\":[\n";
+            for(var i=0; i<data["generationRules"].length; i++){
+                result += "\t\t{\n";
+                result += "\t\t\t\"genData\":[";
+                for(var j=0; j<data["generationRules"][i]["genData"].length; j++){
+                    result += "\"" + data["generationRules"][i]["genData"][j] + "\", ";
+                }
+                result = result.substring(0, result.length - 2);
+                result += "],\n";
 
-            result += "\t\"roomRules\":[";
-            for(var i=0; i<data["roomRules"].length; i++){
-                result += "\"" + data["roomRules"][i] + "\", ";
-            }
-            result= result.substring(0, result.length - 2);
-            result += "],\n";
+                result += "\t\t\t\"rules\":[";
+                for(var j=0; j<data["generationRules"][i]["rules"].length; j++){
+                    result += "\"" + data["generationRules"][i]["rules"][j] + "\", ";
+                }
+                if(data["generationRules"][i]["rules"].length > 0){
+                    result = result.substring(0, result.length - 2);
+                }
+                result += "]\n";
 
-            result += "\t\"smoothRules\":[";
-            for(var i=0; i<data["smoothRules"].length; i++){
-                result += "\"" + data["smoothRules"][i] + "\", ";
+                result += "\t\t},\n";
             }
-            result= result.substring(0, result.length - 2);
-            result += "]\n";
+            if(data["generationRules"].length > 0){
+                result= result.substring(0, result.length - 2);
+            }
+            result += "\n\t]\n";
 
             result += "};";
             textBox.value = result;
@@ -333,7 +394,7 @@
 
         function getExample(data){
             procengine.initialize(data);
-            return procengine.generateLevel();
+            return procengine.generateMap();
         }
 
         function printExample(data){
@@ -341,7 +402,13 @@
             var stringData = "";
             for(var y=0; y<data.length; y++){
                 for(var x=0; x<data[y].length; x++){
-                    stringData += procengine.identifiedNames.namesIndex[data[y][x]];
+                    var startingIndex = "0";
+                    var shift = 0;
+                    if(procengine.identifiedNames.namesIndex[data[y][x]] >= 10){
+                        startingIndex = "a";
+                        shift = 10;
+                    }
+                    stringData += String.fromCharCode(startingIndex.charCodeAt(0) + procengine.identifiedNames.namesIndex[data[y][x]] - shift);
                 }
                 stringData += "\n";
             }
