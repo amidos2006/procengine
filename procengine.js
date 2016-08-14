@@ -15,7 +15,7 @@ var procengine = {
     /**
      * for debugging the engine
      */
-    isDebug: true,
+    isDebug: false,
     /**
      * current number of objects spawned from this type
      */
