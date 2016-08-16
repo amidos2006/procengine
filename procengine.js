@@ -1121,7 +1121,7 @@ var procengine = {
           procengine.generationRules.toString() + "\n";
   }
 };
-///////////////////////////////Testing Code/////////////////////////////////////
+/////////////////////////////Testing Code/////////////////////////////////////
 // var data = {
 //   "mapData": ["24x8", "solid:empty"],
 //   "roomData": ["equal:2x2:4", "solid:1|empty:2"],
@@ -1131,7 +1131,7 @@ var procengine = {
 //     {"genData": ["2", "room:-1", "connect:plus:1"], 
 //       "rules": ["empty,all,or,solid>5,solid:1"]},
 //     {"genData": ["1", "room:2", "connect:plus:1"],
-//      "rules": ["empty,all,or,empty>4,empty:4|goal:1"]}
+//      "rules": ["empty,all,or,empty>4,empty:4|goal:1"]},
 //     {"genData": ["0", "map:-1", "connect:plus:1"], 
 //       "rules": []}
 //   ]
