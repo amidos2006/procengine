@@ -626,7 +626,7 @@ var procengine = {
     }
     else if(procengine.roomData.roomType == procengine.RoomType["tree"]){
       rooms = procengine.getTreeRooms(map, procengine.roomData.roomParameter[0], 
-        procengine.roomData.roomParameter[1], procengine.diggerInfo.roomNumber);
+        procengine.roomData.roomParameter[1], procengine.roomData.roomNumber);
     }
 
     return rooms;
@@ -986,7 +986,12 @@ var procengine = {
         var pieces = data["names"][i].split(":");
         procengine.identifiedNames.namesIndex[pieces[0].trim().toLowerCase()] = index;
         procengine.identifiedNames.indexNames[index] = pieces[0].trim().toLowerCase();
-        procengine.identifiedNames.maxCounts[index] = parseInt(pieces[1].trim());
+        if(pieces.length > 1){
+          procengine.identifiedNames.maxCounts[index] = parseInt(pieces[1].trim());
+        }
+        else{
+          procengine.identifiedNames.maxCounts[index] = -1;
+        }
         index+=1;
       }
     }
@@ -1117,19 +1122,24 @@ var procengine = {
   }
 };
 ///////////////////////////////Testing Code/////////////////////////////////////
-// var data = {
-//   "mapData": ["24x8", "solid:empty"],
-//   "roomData": ["equal:2x2:4", "solid:1|empty:2"],
-//   "names": ["empty:-1", "solid:-1", "goal:1"],
-//   "neighbourhoods": {"plus":"010,101,010", "all":"111,101,111"},
-//   "generationRules": [
-//     {"genData": ["2", "room:-1", "connect:plus:1"], 
-//       "rules": ["empty,all,or,solid>5,solid:1"]},
-//     {"genData": ["1", "room:2", "connect:plus:1"],
-//      "rules": ["empty,all,or,empty>4,empty:4|goal:1"]}
-//     {"genData": ["0", "map:-1", "connect:plus:1"], 
-//       "rules": []}
-//   ]
-// };
-// procengine.initialize(data);
-// procengine.generateMap();
+var data={
+	"mapData":["36x24", "solid:empty"],
+	"roomData":["tree:2x2:10", "empty:2|solid:1"],
+	"names":["empty:-1", "solid:-1", "player:1", "gold:10", "enemy:15"],
+	"neighbourhoods":{
+		"plus": "010,101,010",
+		"all": "111,111,111"
+	},
+	"generationRules":[
+		{
+			"genData":["3", "room:-1", "connect:plus:1"],
+			"rules":[]
+		},
+		{
+			"genData":["1", "room:-1", "connect:plus:1"],
+			"rules":["empty,plus,or,empty>2,player:1|empty:8|gold:2|enemy:2"]
+		}
+	]
+};
+procengine.initialize(data);
+procengine.generateMap();
