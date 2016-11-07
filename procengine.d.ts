@@ -9,12 +9,12 @@ declare module procengine{
   *                      "neigbourhoods", "startingRules", "roomRules",
   *                      "smoothRules"
   */
-  function intialize(data:Object):void;
+  function initialize(data:Object):void;
   /**
   * generate a level based on the intialized data
   * @return {String[][]} a 2d matrix of the defined names
   */
-  function generateLevel():String[][];
+  function generateMap():String[][];
   /**
   * get string contains all the data about the generator
   * @return {String} display all the information stored in the engine

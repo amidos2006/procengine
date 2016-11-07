@@ -1,4 +1,4 @@
-# ProcEngine v1.1.0 [Open Beta]
+# ProcEngine v1.1.1 [Open Beta]
 ## What is ProcEngine?
 ProcEngine is a step toward having a unified opensource library for different map generation techniques. The library is simple and easy to use. You only have 3 functions to use and 1 attribute:
 
@@ -163,7 +163,7 @@ This section defines information about the generated map. Its an array of 4 part
     - `tileInitial`: is the initial value the whole map will be initialized with (it must be defined in the Names Section).
     - `tileDig`: is the value used to dig through the map (it must be defined in the Names Section).
   - `fixType:neighbourhoodName:thickness`:
-    - `fixType`: the technique used to handle the disconnected parts in a single room. In the current version we have two techniques `delete` (deletes all other parts of the rooms and leave the largest one) and `connect` (connect all the separated parts in the room).
+    - `fixType`: the technique used to handle the disconnected parts in a single room. In the current version we have three techniques `delete` (deletes all other parts of the rooms and leave the largest one), `connect` (connect all the separated parts in the room), and `none` (do nothing).
     - `neighbourhoodName`: the neighbourhood used to check connectivity (It must be defined in the Neighbourhoods Section).
     - `thickness`: how thick the digging should be.
 - **Room Data Section:**

@@ -109,7 +109,8 @@ var procengine = {
    */
   ConnectionType: {
     "connect":0,
-    "delete":1
+    "delete":1,
+    "none":2
   },
   /**
    * used to determine the type of map division
