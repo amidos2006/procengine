@@ -234,3 +234,8 @@ This section defines the rules for the cellular automata used to generate the ro
     - `replaceTile1:count1|replaceTile2:count2|...|replaceTileN:countN`: Is executed the same way like Starting Rules (`replaceTile` must be defined in the Names Section). It could be rewritten as `startingRule1|startingRule2|...|startingRuleN`.
 
 For a simple way to construct the initialization object try using this tool ([link](http://cdn.rawgit.com/amidos2006/procengine/master/Example/index.html)).
+
+## Games by ProcEngine
+- [BAMLike](https://amidos2006.itch.io/bamlike): A tribute to Beneath Apple Manor (BAM). BAM is the first procedurally generated game with Permadeath (predates Rogue).
+
+send us your games and feedback to (amidos2002@hotmail.com).
