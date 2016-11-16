@@ -60,10 +60,10 @@ This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating
 <div align="center">
 <img src="http://amidos-games.com/wp-content/uploads/2013/10/BAMLikeBanner.png"/><br/>
 <a href="https://amidos2006.itch.io/bamlike">BAMLike</a><br/>
-A tribute to Beneath Apple Manor (BAM). BAM is the first procedurally generated game (predates Rogue).
+A tribute to Beneath Apple Manor (BAM). BAM is the first procedurally generated game (predates Rogue).<br/>
+<br/>
+send us your games and feedback to <a href="mail:amidos2002@hotmail.com">amidos2002@hotmail.com</a>.
 </div>
-
-send us your games and feedback to (amidos2002@hotmail.com).
 
 ## What is the main features?
 - 2 different room spawning techniques (equal split/tree division)
