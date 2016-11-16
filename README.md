@@ -58,8 +58,8 @@ This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating
 
 ## Games by ProcEngine
 <div align="center">
-<img src="http://amidos-games.com/wp-content/uploads/2013/10/BAMLikeBanner.png"/>
-[BAMLike](https://amidos2006.itch.io/bamlike)
+<img src="http://amidos-games.com/wp-content/uploads/2013/10/BAMLikeBanner.png"/><br/>
+<a href="https://amidos2006.itch.io/bamlike">BAMLike</a><br/>
 A tribute to Beneath Apple Manor (BAM). BAM is the first procedurally generated game with Permadeath (predates Rogue).
 </div>
 
