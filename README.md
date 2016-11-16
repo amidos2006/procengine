@@ -57,6 +57,7 @@ For a simple way to construct the initialization object try using this tool ([li
 This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating the world (in Emoji)`.
 
 ## Games by ProcEngine
+[BAMLike](http://amidos-games.com/wp-content/uploads/2013/10/BAMLikeBanner.png)
 - [BAMLike](https://amidos2006.itch.io/bamlike): A tribute to Beneath Apple Manor (BAM). BAM is the first procedurally generated game with Permadeath (predates Rogue).
 
 send us your games and feedback to (amidos2002@hotmail.com).
