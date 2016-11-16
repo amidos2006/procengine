@@ -62,7 +62,7 @@ This library is inspired by Kate Compton `tracery.js` and Nicky Case `Simulating
 <a href="https://amidos2006.itch.io/bamlike">BAMLike</a><br/>
 A tribute to Beneath Apple Manor (BAM). BAM is the first procedurally generated game (predates Rogue).<br/>
 <br/>
-send us your games and feedback to <a href="mail:amidos2002@hotmail.com">amidos2002@hotmail.com</a>.
+send us your games and feedback to <a href="mailto:amidos2002@hotmail.com">amidos2002@hotmail.com</a>.
 </div>
 
 ## What is the main features?
